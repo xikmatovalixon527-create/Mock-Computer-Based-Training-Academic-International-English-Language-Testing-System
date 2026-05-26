@@ -123,6 +123,7 @@ export default function TeacherReview() {
   const [activeTaskTab, setActiveTaskTab] = useState(0); 
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [focusedCommentIndex, setFocusedCommentIndex] = useState<number | null>(null);
+  const [skipScoring, setSkipScoring] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -156,17 +157,25 @@ export default function TeacherReview() {
         } catch (e) {}
 
         if (isJson && parsedOverall) {
-          setTask1Scores(parsedOverall.task1?.scores || { ta: 0, cc: 0, lr: 0, gra: 0 });
+          const t1s = parsedOverall.task1?.scores || { ta: 0, cc: 0, lr: 0, gra: 0 };
+          const t2s = parsedOverall.task2?.scores || { ta: 0, cc: 0, lr: 0, gra: 0 };
+          setTask1Scores(t1s);
           setTask1Feedbacks(parsedOverall.task1?.feedbacks || { ta: '', cc: '', lr: '', gra: '' });
-          setTask2Scores(parsedOverall.task2?.scores || { ta: 0, cc: 0, lr: 0, gra: 0 });
+          setTask2Scores(t2s);
           setTask2Feedbacks(parsedOverall.task2?.feedbacks || { ta: '', cc: '', lr: '', gra: '' });
           setOverallFeedback(parsedOverall.general_comment || '');
+
+          const t1_no_score = Object.values(t1s).every(s => !s || s === 0);
+          const t2_no_score = Object.values(t2s).every(s => !s || s === 0);
+          if (t1_no_score && t2_no_score) {
+            setSkipScoring(true);
+          }
         } else {
           const theScores = {
-            ta: reviewData.review.ta_band || 0,
-            cc: reviewData.review.cc_band || 0,
-            lr: reviewData.review.lr_band || 0,
-            gra: reviewData.review.gra_band || 0
+            ta: reviewData.review.ta_band ? parseFloat(reviewData.review.ta_band) : 0,
+            cc: reviewData.review.cc_band ? parseFloat(reviewData.review.cc_band) : 0,
+            lr: reviewData.review.lr_band ? parseFloat(reviewData.review.lr_band) : 0,
+            gra: reviewData.review.gra_band ? parseFloat(reviewData.review.gra_band) : 0
           };
           const theFeedbacks = {
             ta: reviewData.review.ta_feedback || '',
@@ -183,6 +192,10 @@ export default function TeacherReview() {
             setTask2Feedbacks(theFeedbacks);
           }
           setOverallFeedback(reviewData.review.overall_feedback || '');
+
+          if (Object.values(theScores).every(s => !s || s === 0)) {
+            setSkipScoring(true);
+          }
         }
 
         if (reviewData.review.comments) {
@@ -250,16 +263,18 @@ export default function TeacherReview() {
   const handleSubmit = async () => {
     if (!essay) return;
     
-    if (essay.task_type === 'both') {
-       if (Object.values(task1Scores).some(s => s === 0) || Object.values(task2Scores).some(s => s === 0)) {
-           toast.error('Assign a grade parameter criteria across both tasks.');
-           return;
-       }
-    } else {
-        const checkScores = essay.task_type === 'task1' ? task1Scores : task2Scores;
-        if (Object.values(checkScores).some(s => s === 0)) {
-            toast.error('Assign score metrics across all criteria.');
-            return;
+    if (!skipScoring) {
+        if (essay.task_type === 'both') {
+           if (Object.values(task1Scores).some(s => s === 0) || Object.values(task2Scores).some(s => s === 0)) {
+               toast.error('Assign a grade parameter criteria across both tasks.');
+               return;
+           }
+        } else {
+            const checkScores = essay.task_type === 'task1' ? task1Scores : task2Scores;
+            if (Object.values(checkScores).some(s => s === 0)) {
+                toast.error('Assign score metrics across all criteria.');
+                return;
+            }
         }
     }
 
@@ -269,34 +284,60 @@ export default function TeacherReview() {
     try {
         let payload: any = { essay_id: id, comments };
         
-        if (essay.task_type === 'both') {
-            const t1 = calculateOverallBand(task1Scores.ta, task1Scores.cc, task1Scores.lr, task1Scores.gra);
-            const t2 = calculateOverallBand(task2Scores.ta, task2Scores.cc, task2Scores.lr, task2Scores.gra);
-            const overallWeighted = Math.round(((t1 + t2 * 2) / 3) * 2) / 2;
-            
-            payload.ta_band = overallWeighted; 
-            payload.cc_band = overallWeighted;
-            payload.lr_band = overallWeighted;
-            payload.gra_band = overallWeighted;
-            
-            payload.overall_feedback = JSON.stringify({
-                task1: { scores: task1Scores, feedbacks: task1Feedbacks },
-                task2: { scores: task2Scores, feedbacks: task2Feedbacks },
-                general_comment: overallFeedback
-            });
+        if (skipScoring) {
+            if (essay.task_type === 'both') {
+                payload.ta_band = 0; 
+                payload.cc_band = 0;
+                payload.lr_band = 0;
+                payload.gra_band = 0;
+                
+                payload.overall_feedback = JSON.stringify({
+                    task1: { scores: { ta: 0, cc: 0, lr: 0, gra: 0 }, feedbacks: task1Feedbacks },
+                    task2: { scores: { ta: 0, cc: 0, lr: 0, gra: 0 }, feedbacks: task2Feedbacks },
+                    general_comment: overallFeedback
+                });
+            } else {
+                const finalFeedbacks = essay.task_type === 'task1' ? task1Feedbacks : task2Feedbacks;
+                payload.ta_band = 0;
+                payload.ta_feedback = finalFeedbacks.ta;
+                payload.cc_band = 0;
+                payload.cc_feedback = finalFeedbacks.cc;
+                payload.lr_band = 0;
+                payload.lr_feedback = finalFeedbacks.lr;
+                payload.gra_band = 0;
+                payload.gra_feedback = finalFeedbacks.gra;
+                payload.overall_feedback = overallFeedback;
+            }
         } else {
-            const finalScores = essay.task_type === 'task1' ? task1Scores : task2Scores;
-            const finalFeedbacks = essay.task_type === 'task1' ? task1Feedbacks : task2Feedbacks;
-            
-            payload.ta_band = finalScores.ta;
-            payload.ta_feedback = finalFeedbacks.ta;
-            payload.cc_band = finalScores.cc;
-            payload.cc_feedback = finalFeedbacks.cc;
-            payload.lr_band = finalScores.lr;
-            payload.lr_feedback = finalFeedbacks.lr;
-            payload.gra_band = finalScores.gra;
-            payload.gra_feedback = finalFeedbacks.gra;
-            payload.overall_feedback = overallFeedback;
+            if (essay.task_type === 'both') {
+                const t1 = calculateOverallBand(task1Scores.ta, task1Scores.cc, task1Scores.lr, task1Scores.gra);
+                const t2 = calculateOverallBand(task2Scores.ta, task2Scores.cc, task2Scores.lr, task2Scores.gra);
+                const overallWeighted = Math.round(((t1 + t2 * 2) / 3) * 2) / 2;
+                
+                payload.ta_band = overallWeighted; 
+                payload.cc_band = overallWeighted;
+                payload.lr_band = overallWeighted;
+                payload.gra_band = overallWeighted;
+                
+                payload.overall_feedback = JSON.stringify({
+                    task1: { scores: task1Scores, feedbacks: task1Feedbacks },
+                    task2: { scores: task2Scores, feedbacks: task2Feedbacks },
+                    general_comment: overallFeedback
+                });
+            } else {
+                const finalScores = essay.task_type === 'task1' ? task1Scores : task2Scores;
+                const finalFeedbacks = essay.task_type === 'task1' ? task1Feedbacks : task2Feedbacks;
+                
+                payload.ta_band = finalScores.ta;
+                payload.ta_feedback = finalFeedbacks.ta;
+                payload.cc_band = finalScores.cc;
+                payload.cc_feedback = finalFeedbacks.cc;
+                payload.lr_band = finalScores.lr;
+                payload.lr_feedback = finalFeedbacks.lr;
+                payload.gra_band = finalScores.gra;
+                payload.gra_feedback = finalFeedbacks.gra;
+                payload.overall_feedback = overallFeedback;
+            }
         }
 
         const res = await fetch('/api/reviews', {
@@ -394,8 +435,8 @@ export default function TeacherReview() {
         <div className="flex items-center space-x-6 self-stretch sm:self-auto justify-between sm:justify-end">
           <div className="text-right">
             <div className="text-[10px] text-[var(--color-text-tertiary)] uppercase tracking-widest font-bold">Graded Band Index</div>
-            <div className={`text-4xl font-black font-sans tracking-wide ${overallBand > 0 ? getBandTextColor(overallBand) : 'text-[var(--color-text-tertiary)]'}`}>
-              {overallBand > 0 ? Number(overallBand).toFixed(1) : 'PENDING'}
+            <div className={`text-4xl font-black font-sans tracking-wide ${(!skipScoring && overallBand > 0) ? getBandTextColor(overallBand) : 'text-[var(--color-text-tertiary)]'}`}>
+              {skipScoring ? 'FEEDBACK ONLY' : (overallBand > 0 ? Number(overallBand).toFixed(1) : 'PENDING')}
             </div>
           </div>
           
@@ -526,7 +567,29 @@ export default function TeacherReview() {
 
          {/* Right Side: Scoring & Rubrics */}
          <div className="w-full lg:w-1/2 p-4 sm:p-6 overflow-y-auto bg-[#050507]/40">
-            <h2 className="text-xs uppercase tracking-widest font-extrabold mb-6 flex items-center text-[#F5F5F7]"><AlertCircle className="w-4 h-4 mr-2 text-[var(--color-primary)]"/> Evaluation Rubric matrix</h2>
+            <h2 className="text-xs uppercase tracking-widest font-extrabold mb-4 flex items-center text-[#F5F5F7]"><AlertCircle className="w-4 h-4 mr-2 text-[var(--color-primary)]"/> Evaluation Rubric matrix</h2>
+             
+             {/* Feedback Only Toggle */}
+             <div className="mb-6 p-4 rounded bg-[#0A0A0D]/90 border border-[var(--color-border)]/55 flex items-center justify-between shadow-lg">
+               <div className="space-y-0.5 pr-4">
+                 <label htmlFor="skip-scoring" className="text-xs font-bold uppercase tracking-widest text-[#FFFFFF] select-none block cursor-pointer">
+                   Feedback Only Mode 
+                 </label>
+                 <span className="text-[10px] text-[var(--color-text-tertiary)] block uppercase tracking-wider leading-relaxed font-sans font-semibold">
+                   Submit annotations & feedback without assigning numeric scores.
+                 </span>
+               </div>
+               <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                 <input 
+                   id="skip-scoring"
+                   type="checkbox" 
+                   checked={skipScoring} 
+                   onChange={(e) => setSkipScoring(e.target.checked)} 
+                   className="sr-only peer" 
+                 />
+                 <div className="w-9 h-5 bg-neutral-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-neutral-900 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-neutral-500 after:border-neutral-400 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[var(--color-primary)] peer-checked:after:bg-[#000000]"></div>
+               </label>
+             </div>
             
             <div className="space-y-6">
               {[
@@ -541,7 +604,8 @@ export default function TeacherReview() {
                     <select 
                        value={(activeScores as any)[crit.id]}
                        onChange={(e) => handleScoreChange(crit.id, parseFloat(e.target.value))}
-                       className="block border border-[var(--color-border)] bg-black text-sm text-[#F5F5F7] rounded p-2 px-3 focus:outline-none font-serif font-black cursor-pointer"
+                       disabled={skipScoring}
+                       className="block border border-[var(--color-border)] bg-black text-sm text-[#F5F5F7] rounded p-2 px-3 focus:outline-none font-serif font-black cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       <option value={0}>Assign Band Score</option>
                       {bandOptions.map(b => (

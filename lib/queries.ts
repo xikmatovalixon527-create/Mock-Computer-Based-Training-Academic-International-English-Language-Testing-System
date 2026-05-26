@@ -26,9 +26,11 @@ export async function createUser(fullName: string, passwordHash: string, role: s
 export async function getAllStudents() {
   return sql`
     SELECT u.id, u.full_name, u.role, u.group_name, u.created_at,
-           COUNT(e.id)::int AS essay_count
+           COUNT(DISTINCT e.id)::int AS essay_count,
+           MAX(ld.last_active) AS last_active
     FROM users u
     LEFT JOIN essays e ON e.student_id = u.id
+    LEFT JOIN live_drafts ld ON ld.student_id = u.id
     WHERE u.role = 'student'
     GROUP BY u.id, u.group_name
     ORDER BY u.created_at DESC
@@ -131,12 +133,12 @@ export async function getReviewByEssayId(essayId: string) {
 export async function saveReview(params: {
   essay_id: string;
   teacher_id: string;
-  ta_band: number; ta_feedback: string;
-  cc_band: number; cc_feedback: string;
-  lr_band: number; lr_feedback: string;
-  gra_band: number; gra_feedback: string;
+  ta_band: number | null; ta_feedback: string;
+  cc_band: number | null; cc_feedback: string;
+  lr_band: number | null; lr_feedback: string;
+  gra_band: number | null; gra_feedback: string;
   overall_feedback: string;
-  overall_band: number;
+  overall_band: number | null;
   comments: unknown[];
 }) {
   const rows = await sql`

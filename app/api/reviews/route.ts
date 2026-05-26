@@ -25,15 +25,28 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const { essay_id, ta_band, ta_feedback, cc_band, cc_feedback, lr_band, lr_feedback, gra_band, gra_feedback, overall_feedback, comments } = body;
-    const overall_band = calculateOverallBand(ta_band, cc_band, lr_band, gra_band);
+
+    const parseScore = (score: any) => {
+      if (score === undefined || score === null || score === '') return null;
+      const parsed = typeof score === 'number' ? score : parseFloat(score);
+      return isNaN(parsed) || parsed <= 0 ? null : parsed;
+    };
+
+    const parsed_ta = parseScore(ta_band);
+    const parsed_cc = parseScore(cc_band);
+    const parsed_lr = parseScore(lr_band);
+    const parsed_gra = parseScore(gra_band);
+
+    const hasScores = parsed_ta !== null && parsed_cc !== null && parsed_lr !== null && parsed_gra !== null;
+    const overall_band = hasScores ? calculateOverallBand(parsed_ta!, parsed_cc!, parsed_lr!, parsed_gra!) : null;
 
     const result = await saveReview({
       essay_id,
       teacher_id: session.id,
-      ta_band: parseFloat(ta_band), ta_feedback: ta_feedback || '',
-      cc_band: parseFloat(cc_band), cc_feedback: cc_feedback || '',
-      lr_band: parseFloat(lr_band), lr_feedback: lr_feedback || '',
-      gra_band: parseFloat(gra_band), gra_feedback: gra_feedback || '',
+      ta_band: parsed_ta, ta_feedback: ta_feedback || '',
+      cc_band: parsed_cc, cc_feedback: cc_feedback || '',
+      lr_band: parsed_lr, lr_feedback: lr_feedback || '',
+      gra_band: parsed_gra, gra_feedback: gra_feedback || '',
       overall_feedback: overall_feedback || '',
       overall_band,
       comments: comments || [],

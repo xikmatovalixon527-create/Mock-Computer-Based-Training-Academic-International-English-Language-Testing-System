@@ -15,6 +15,7 @@ interface Student {
   group_name?: string | null;
   created_at: string;
   essay_count: number;
+  last_active?: string | null;
 }
 
 export default function TeacherDashboard() {
@@ -78,6 +79,14 @@ export default function TeacherDashboard() {
         if (data.user) setUser(data.user);
       })
       .catch(() => {});
+
+    // Polling interval to auto-update student active statuses and submisssions
+    const interval = setInterval(() => {
+      fetchStudents();
+      fetchEssays(true);
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const handleDeleteEssay = async (essayId: string) => {
@@ -534,54 +543,80 @@ export default function TeacherDashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--color-border)]/20 bg-[#050507]/20">
-                      {filteredStudentsGrouped.map((student) => (
-                        <tr key={student.id} className="hover:bg-[#111114]/40 transition-colors duration-200">
-                          <td className="px-6 py-4.5 whitespace-nowrap text-[var(--color-text-secondary)] font-mono text-xs">
-                            {format(new Date(student.created_at), 'MMMM dd, yyyy')}
-                          </td>
-                          <td className="px-6 py-4.5 whitespace-nowrap font-bold text-[#FFFFFF] text-xs">
-                            {student.full_name}
-                          </td>
-                          <td className="px-6 py-4.5 whitespace-nowrap">
-                            <span className="text-xs px-2.5 py-1 rounded bg-neutral-900 border border-neutral-800 text-neutral-300 font-semibold uppercase tracking-wider">
-                              {student.group_name || 'No Group Specified'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4.5 whitespace-nowrap text-[var(--color-text-secondary)] uppercase tracking-wider font-semibold text-xs">
-                            {student.essay_count} essays submitted
-                          </td>
-                          <td className="px-6 py-4.5 whitespace-nowrap text-center space-x-2">
-                            <Link
-                              href={`/teacher/monitor/${student.id}`}
-                              className="inline-flex cursor-pointer items-center space-x-1.5 px-3 py-2 bg-red-950/20 text-red-400 border border-red-900/40 hover:bg-red-950 hover:text-red-300 rounded text-xs uppercase tracking-widest font-extrabold transition-all duration-200 animate-pulse hover:animate-none"
-                              title="Launch Full Screen Live Writing Stream"
-                            >
-                              <Eye className="w-4 h-4 shrink-0" />
-                              <span>Live Monitor</span>
-                            </Link>
-                            
-                            <button
-                              onClick={() => {
-                                setEditingStudent(student);
-                                setEditName(student.full_name);
-                                setEditGroup(student.group_name || STUDENT_GROUPS[0]);
-                              }}
-                              className="inline-flex cursor-pointer items-center space-x-1 px-3 py-1.5 bg-neutral-900 text-neutral-300 border border-neutral-800 hover:border-neutral-700 hover:bg-neutral-800 rounded text-xs uppercase tracking-widest font-bold transition-all duration-200"
-                            >
-                              <Edit2 className="w-3.5 h-3.5 shrink-0" />
-                              <span>Edit / Transfer</span>
-                            </button>
-
-                            <button
-                              onClick={() => handleDeleteStudent(student.id)}
-                              className="inline-flex cursor-pointer items-center space-x-1 px-3 py-1.5 bg-[#E06C75]/10 text-[#E06C75] border border-[#E06C75]/25 hover:bg-[#E06C75] hover:text-black rounded text-[#11px] uppercase tracking-widest font-bold transition-all duration-200"
-                            >
-                              <Trash2 className="w-3.5 h-3.5 shrink-0" />
-                              <span>Delete</span>
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                      {filteredStudentsGrouped.map((student) => {
+                        const isWriting = (() => {
+                          if (!student.last_active) return false;
+                          const elapsedMs = Date.now() - new Date(student.last_active).getTime();
+                          return elapsedMs < 150000; // 2.5 minutes
+                        })();
+                        return (
+                          <tr key={student.id} className="hover:bg-[#111114]/40 transition-colors duration-200">
+                            <td className="px-6 py-4.5 whitespace-nowrap text-[var(--color-text-secondary)] font-mono text-xs">
+                              {format(new Date(student.created_at), 'MMMM dd, yyyy')}
+                            </td>
+                            <td className="px-6 py-4.5 whitespace-nowrap font-bold text-[#FFFFFF] text-xs">
+                              <div className="flex items-center gap-2">
+                                <span>{student.full_name}</span>
+                                {isWriting && (
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-950/45 border border-emerald-500/30 text-[9px] text-[#A7F3D0] uppercase font-bold tracking-widest animate-pulse">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                    Writing
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4.5 whitespace-nowrap">
+                              <span className="text-xs px-2.5 py-1 rounded bg-neutral-900 border border-neutral-800 text-neutral-300 font-semibold uppercase tracking-wider">
+                                {student.group_name || 'No Group Specified'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4.5 whitespace-nowrap text-[var(--color-text-secondary)] uppercase tracking-wider font-semibold text-xs">
+                              {student.essay_count} essays submitted
+                            </td>
+                            <td className="px-6 py-4.5 whitespace-nowrap text-center space-x-2">
+                              {isWriting ? (
+                                <Link
+                                  href={`/teacher/monitor/${student.id}`}
+                                  className="inline-flex cursor-pointer items-center space-x-1.5 px-3 py-2 bg-emerald-950/40 text-[#A7F3D0] border border-emerald-500 hover:bg-emerald-900/60 hover:text-white rounded text-xs uppercase tracking-widest font-extrabold transition-all duration-200 animate-pulse hover:animate-none shadow-[0_0_15px_rgba(52,211,153,0.18)]"
+                                  title="Candidate is active! Click to stream typing live."
+                                >
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                                  <span>Live Monitor</span>
+                                </Link>
+                              ) : (
+                                <Link
+                                  href={`/teacher/monitor/${student.id}`}
+                                  className="inline-flex cursor-pointer items-center space-x-1.5 px-3 py-2 bg-red-950/10 text-red-400 border border-red-950 hover:bg-red-950 hover:text-red-300 rounded text-xs uppercase tracking-widest font-extrabold transition-all duration-200 opacity-65 hover:opacity-100"
+                                  title="Click to monitor draft stream."
+                                >
+                                  <Eye className="w-4 h-4 shrink-0" />
+                                  <span>Live Monitor</span>
+                                </Link>
+                              )}
+                              
+                              <button
+                                onClick={() => {
+                                  setEditingStudent(student);
+                                  setEditName(student.full_name);
+                                  setEditGroup(student.group_name || STUDENT_GROUPS[0]);
+                                }}
+                                className="inline-flex cursor-pointer items-center space-x-1 px-3 py-1.5 bg-neutral-900 text-neutral-300 border border-neutral-800 hover:border-neutral-700 hover:bg-neutral-800 rounded text-xs uppercase tracking-widest font-bold transition-all duration-200"
+                              >
+                                <Edit2 className="w-3.5 h-3.5 shrink-0" />
+                                <span>Edit / Transfer</span>
+                              </button>
+  
+                              <button
+                                onClick={() => handleDeleteStudent(student.id)}
+                                className="inline-flex cursor-pointer items-center space-x-1 px-3 py-1.5 bg-[#E06C75]/10 text-[#E06C75] border border-[#E06C75]/25 hover:bg-[#E06C75] hover:text-black rounded text-[#11px] uppercase tracking-widest font-bold transition-all duration-200"
+                              >
+                                <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                                <span>Delete</span>
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
