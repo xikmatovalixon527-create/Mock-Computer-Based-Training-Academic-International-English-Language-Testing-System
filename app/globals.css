@@ -1,0 +1,278 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-sans), 'Outfit', system-ui, sans-serif;
+  --font-serif: var(--font-serif), 'Cormorant Garamond', serif;
+  --font-mono: var(--font-mono), 'JetBrains Mono', monospace;
+
+  /* Premium Luxury Black & Slate Palette */
+  --color-bg: #050507;
+  --color-bg-elevated: #0B0B0E;
+  --color-surface: #101014;
+  --color-surface-hover: #16161C;
+  --color-border: #1B1B22;
+  --color-border-strong: #2D2D37;
+  
+  /* Text scales */
+  --color-text: #F5F5F7; /* Pristine Platinum */
+  --color-text-secondary: #9E9EAA; /* Sterling Muted */
+  --color-text-tertiary: #6E6E77; /* Smoked Dark */
+  
+  /* Luxurious Accents */
+  --color-primary: #C5A880; /* Refined Gold */
+  --color-primary-hover: #D4AF37; /* Cartier Radiant Gold */
+  --color-primary-soft: rgba(197, 168, 128, 0.08);
+  
+  --color-accent: #8E9AAF; /* Fine Silver */
+  --color-accent-soft: rgba(142, 154, 175, 0.08);
+  
+  --color-success: #6AC196; /* Emerald Moss */
+  --color-success-soft: rgba(106, 193, 150, 0.08);
+  
+  --color-warning: #D9A05B; /* Amber Bronze */
+  --color-warning-soft: rgba(217, 160, 91, 0.08);
+  
+  --color-danger: #E06C75; /* Ruby Sangria */
+  --color-danger-soft: rgba(224, 108, 117, 0.08);
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.6);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --shadow-xl: 0 24px 80px rgba(0, 0, 0, 1), inset 0 1px 1px rgba(255, 255, 255, 0.08);
+}
+
+/* Base resets & styles matching Swiss precision */
+* {
+  border-color: var(--color-border);
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Luxurious fluid typography scale */
+.text-display {
+  font-family: var(--font-serif);
+  font-size: clamp(2.5rem, 6vw + 1rem, 5rem);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  font-weight: 300;
+  color: var(--color-text);
+}
+
+.text-h1 {
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 3.8vw + 0.5rem, 3.25rem);
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  font-weight: 300;
+  color: var(--color-text);
+}
+
+.text-h2 {
+  font-family: var(--font-serif);
+  font-size: clamp(1.5rem, 2.8vw + 0.25rem, 2.5rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-weight: 300;
+  color: var(--color-text);
+}
+
+.text-h3 {
+  font-size: clamp(1.125rem, 1.5vw + 0.25rem, 1.5rem);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  font-weight: 600;
+}
+
+.text-body-lg {
+  font-size: clamp(1.125rem, 1vw + 0.3rem, 1.35rem);
+  line-height: 1.6;
+}
+
+.text-body {
+  font-size: clamp(1rem, 0.5vw + 0.35rem, 1.15rem);
+  line-height: 1.6;
+}
+
+.text-body-sm {
+  font-size: clamp(0.875rem, 0.25vw + 0.35rem, 1rem);
+  line-height: 1.5;
+}
+
+/* Luxury Touch targets */
+.touch-target {
+  min-height: 48px;
+  min-width: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+}
+
+/* Focus states with Cartier Precision Gold Rings */
+:focus-visible {
+  outline: 1.5px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Text selections */
+::selection {
+  background: rgba(197, 168, 128, 0.25);
+  color: #FFFFFF;
+}
+
+/* Atmospheric Background Mesh (Subtle mesh glow) */
+.luxury-bg-glow {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background: 
+    radial-gradient(circle at 10% 20%, rgba(197, 168, 128, 0.04) 0%, transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(142, 154, 175, 0.04) 0%, transparent 40%),
+    #050507;
+  pointer-events: none;
+}
+
+/* Chrono grid pattern */
+.luxury-grid-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.01) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255, 255, 255, 0.01) 1px, transparent 1px);
+  background-size: 80px 80px;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* Animations */
+@keyframes luxury-fade {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes luxury-pulse-gold {
+  0%, 100% { box-shadow: 0 0 15px rgba(197, 168, 128, 0.05); }
+  50% { box-shadow: 0 0 35px rgba(197, 168, 128, 0.15); }
+}
+
+@keyframes luxury-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-luxury-fade {
+  animation: luxury-fade 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-slow-spin {
+  animation: luxury-spin 60s linear infinite;
+}
+
+/* Stagger animations */
+.stagger-luxury > * {
+  animation: luxury-fade 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.stagger-luxury > *:nth-child(1) { animation-delay: 50ms; }
+.stagger-luxury > *:nth-child(2) { animation-delay: 100ms; }
+.stagger-luxury > *:nth-child(3) { animation-delay: 150ms; }
+.stagger-luxury > *:nth-child(4) { animation-delay: 200ms; }
+.stagger-luxury > *:nth-child(5) { animation-delay: 250ms; }
+
+/* Metallic border highlights */
+.metallic-gold-border {
+  border: 1px solid transparent;
+  background: linear-gradient(var(--color-bg-elevated), var(--color-bg-elevated)) padding-box,
+              linear-gradient(135deg, rgba(197, 168, 128, 0.25), rgba(197, 168, 128, 0.02) 40%, rgba(255, 255, 255, 0.01) 70%, rgba(142, 154, 175, 0.12)) border-box;
+}
+
+.metallic-silver-border {
+  border: 1px solid transparent;
+  background: linear-gradient(var(--color-bg-elevated), var(--color-bg-elevated)) padding-box,
+              linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.01) 50%, rgba(142, 154, 175, 0.05)) border-box;
+}
+
+/* Glass panel elements */
+.smoked-glass {
+  background: rgba(11, 11, 14, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+/* Premium Card Interaction */
+.luxury-card-hover {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.luxury-card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8), 0 0 1px rgba(197, 168, 128, 0.1);
+  border-color: rgba(197, 168, 128, 0.35);
+}
+
+@keyframes rainbow-sweep {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.rainbow-score-text {
+  background: linear-gradient(
+    to right,
+    #EF4444,
+    #F97316,
+    #EAB308,
+    #16A34A,
+    #3B82F6,
+    #7C3AED,
+    #EF4444
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: rainbow-sweep 3s linear infinite;
+  display: inline-block;
+  font-weight: 950;
+}
+

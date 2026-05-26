@@ -1,11 +1,53 @@
-<div align="center">
+# IELTS CBT Platform
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+Professional computer-based IELTS Academic Writing practice platform with examiner feedback.
 
-  <h1>Built with AI Studio</h2>
+## Tech Stack
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+- **Framework**: Next.js 15 (React 19)
+- **Language**: TypeScript
+- **Styling**: TailwindCSS 4
+- **Database**: Neon (PostgreSQL)
+- **Authentication**: JWT with httpOnly cookies
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+## Getting Started
 
-</div>
+1. Install dependencies:
+```bash
+npm install
+```
+
+2. Set up environment variables in `.env.local`:
+```env
+DATABASE_URL=your_neon_connection_string
+JWT_SECRET=your_secret_key
+```
+
+3. Run the development server:
+```bash
+npm run dev
+```
+
+4. Open [http://localhost:3000](http://localhost:3000)
+
+## Project Structure
+
+```
+app/
+├── api/              # API routes
+├── student/          # Student dashboard & features
+├── teacher/          # Teacher dashboard & review system
+├── test-room/        # Test environment
+└── (auth)/           # Login & registration
+components/           # Shared UI components
+lib/                  # Utilities, auth, database queries
+types/                # TypeScript type definitions
+```
+
+## Features
+
+- Role-based authentication (Student/Teacher)
+- IELTS Writing Task 1 & Task 2 practice
+- Real-time word count & timer
+- Examiner feedback with band scores
+- Responsive design with dark theme
