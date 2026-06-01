@@ -333,9 +333,15 @@ export default function StudentReviewResult() {
             <div className="text-[10px] uppercase tracking-widest text-[var(--color-text-tertiary)] font-bold mb-2">Overall Evaluated Score</div>
             
             <div className="relative inline-flex items-center justify-center p-4 mb-4">
-              <span className={`text-9xl font-black font-sans tracking-tight select-none hover:scale-110 transition-transform duration-300 ${getBandTextColor(essay.overall_band)}`}>
-                {essay.overall_band != null ? Number(essay.overall_band).toFixed(1) : '—'}
-              </span>
+              {essay.overall_band != null && Number(essay.overall_band) > 0 ? (
+                <span className={`text-9xl font-black font-sans tracking-tight select-none hover:scale-110 transition-transform duration-300 ${getBandTextColor(essay.overall_band)}`}>
+                  {Number(essay.overall_band).toFixed(1)}
+                </span>
+              ) : (
+                <span className="text-3xl font-black font-sans tracking-wider select-none hover:scale-110 transition-transform duration-300 text-neutral-400 py-6">
+                  FEEDBACK ONLY
+                </span>
+              )}
             </div>
 
             <div className="block">
@@ -360,8 +366,8 @@ export default function StudentReviewResult() {
                 <div key={idx} className="p-4 space-y-2 hover:bg-[#0B0B0E] transition-all">
                   <div className="flex justify-between items-center">
                     <div className="font-bold text-xs uppercase tracking-wider text-[#F5F5F7]">{crit.name}</div>
-                    <div className={`font-sans font-extrabold text-base leading-none border px-3.5 py-2 rounded shadow-sm ${getBandBadgeStyle(crit.score)}`}>
-                      Band {crit.score != null ? crit.score.toFixed(1) : '-'}
+                    <div className={`font-sans font-extrabold text-xs uppercase leading-none border px-3.5 py-2 rounded shadow-sm ${getBandBadgeStyle(crit.score)}`}>
+                      {crit.score != null && Number(crit.score) > 0 ? `Band ${Number(crit.score).toFixed(1)}` : 'No Score'}
                     </div>
                   </div>
                   {crit.fb && (

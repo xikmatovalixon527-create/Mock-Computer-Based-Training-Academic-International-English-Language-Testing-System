@@ -20,6 +20,14 @@ async function runMigrations(db: any) {
         updated_at TIMESTAMPTZ DEFAULT NOW()
       );
     `;
+    try {
+      await db`ALTER TABLE reviews ALTER COLUMN ta_band DROP NOT NULL;`;
+      await db`ALTER TABLE reviews ALTER COLUMN cc_band DROP NOT NULL;`;
+      await db`ALTER TABLE reviews ALTER COLUMN lr_band DROP NOT NULL;`;
+      await db`ALTER TABLE reviews ALTER COLUMN gra_band DROP NOT NULL;`;
+    } catch (bandMigrationErr) {
+      console.warn("Bands alteration warning:", bandMigrationErr);
+    }
   } catch (err) {
     console.error("Automated migration execution failed:", err);
     isDbMigrated = false;

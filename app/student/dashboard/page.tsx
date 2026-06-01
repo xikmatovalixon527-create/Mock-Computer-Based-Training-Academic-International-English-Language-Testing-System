@@ -32,8 +32,9 @@ export default function StudentDashboard() {
 
   const reviewed = essays.filter(e => e.status === 'reviewed');
   const pending = essays.filter(e => e.status !== 'reviewed');
-  const avgBand = reviewed.length
-    ? (reviewed.reduce((s, e) => s + (Number(e.overall_band) || 0), 0) / reviewed.length).toFixed(1)
+  const reviewedWithScores = reviewed.filter(e => e.overall_band !== null && Number(e.overall_band) > 0);
+  const avgBand = reviewedWithScores.length
+    ? (reviewedWithScores.reduce((s, e) => s + Number(e.overall_band), 0) / reviewedWithScores.length).toFixed(1)
     : null;
 
   const getTopicText = (topic: string) => {
@@ -186,7 +187,7 @@ export default function StudentDashboard() {
                           <>
                             <span className={`text-lg font-sans font-black tracking-wide uppercase flex items-center gap-2.5 px-4.5 py-2.5 rounded-lg border shadow-md ${getBandBadgeStyle(essay.overall_band)}`}>
                               <span className={`w-2 h-2 rounded-full ${essay.overall_band != null && Number(essay.overall_band) >= 9.0 ? 'bg-gradient-to-r from-red-500 to-purple-500 animate-pulse' : 'bg-current'}`} />
-                              Band {essay.overall_band != null ? Number(essay.overall_band).toFixed(1) : '—'}
+                              {essay.overall_band != null && Number(essay.overall_band) > 0 ? `Band ${Number(essay.overall_band).toFixed(1)}` : 'FEEDBACK ONLY'}
                             </span>
                             <Link
                               href={`/student/review/${essay.id}`}

@@ -460,7 +460,7 @@ export default function TeacherDashboard() {
                               {essay.status === 'reviewed' ? (
                                 <span className={`text-sm font-sans font-extrabold tracking-wide uppercase flex items-center gap-2 px-4 py-2 rounded-md border shadow-sm ${getBandBadgeStyle(essay.overall_band)}`}>
                                   <span className={`w-1.5 h-1.5 rounded-full ${essay.overall_band != null && Number(essay.overall_band) >= 9.0 ? 'bg-gradient-to-r from-red-500 to-purple-500 animate-pulse' : 'bg-current'}`} />
-                                  Band {essay.overall_band != null ? Number(essay.overall_band).toFixed(1) : '—'}
+                                  {essay.overall_band != null && Number(essay.overall_band) > 0 ? `Band ${Number(essay.overall_band).toFixed(1)}` : 'FEEDBACK ONLY'}
                                 </span>
                               ) : (
                                 <span className="text-[10px] font-mono font-semibold tracking-wider text-[var(--color-warning)] uppercase flex items-center gap-1.5 px-2 py-0.5 rounded bg-[var(--color-warning-soft)] border border-[var(--color-warning)]/10">
