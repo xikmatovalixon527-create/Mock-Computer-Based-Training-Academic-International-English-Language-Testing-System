@@ -1,8 +1,8 @@
 import React from 'react';
 
 export function HighlightedText({ text, comments, taskIndex, focusedCommentIndex, setFocusedCommentIndex }: any) {
-  if (!text) return <p className="whitespace-pre-wrap font-sans text-xl text-zinc-200">{text}</p>;
-  if (!comments || comments.length === 0) return <p className="whitespace-pre-wrap font-sans text-xl text-zinc-200 leading-relaxed">{text}</p>;
+  if (!text) return <p className="whitespace-pre-wrap font-sans text-base text-[#f5f5f7]">{text}</p>;
+  if (!comments || comments.length === 0) return <p className="whitespace-pre-wrap font-sans text-base text-[#f5f5f7] leading-relaxed">{text}</p>;
   
   const relevantCommentsWithIndex = (comments || [])
     .map((c: any, originalIndex: number) => ({ ...c, originalIndex }))
@@ -42,10 +42,10 @@ export function HighlightedText({ text, comments, taskIndex, focusedCommentIndex
       <span 
         key={`mark-${i}`} 
         onClick={() => setFocusedCommentIndex(isFocused ? null : c.originalIndex)}
-        className={`relative transition-all duration-150 cursor-pointer inline px-2 py-1 rounded border-b-2 ${
+        className={`relative transition-all duration-150 cursor-pointer inline px-1.5 py-0.5 rounded ${
           isFocused 
-            ? 'bg-blue-600 text-white font-semibold border-solid border-blue-500 shadow-lg shadow-blue-500/20 scale-105 mx-0.5' 
-            : 'bg-zinc-800 text-zinc-100 border-dashed border-zinc-600 hover:bg-zinc-700/80 hover:text-white'
+            ? 'bg-[#0071e3] text-white font-medium border-b-2 border-solid border-white mx-0.5' 
+            : 'bg-[#374151]/30 text-[#f5f5f7] border-b border-dashed border-[#8a8a8e] hover:bg-[#374151]/50'
         }`}
       >
         {text.substring(c.start_index, c.end_index)}
@@ -59,7 +59,7 @@ export function HighlightedText({ text, comments, taskIndex, focusedCommentIndex
   }
   
   return (
-    <div className="whitespace-pre-wrap leading-loose font-sans text-xl text-zinc-200 select-text">
+    <div className="whitespace-pre-wrap leading-relaxed font-sans text-base text-[#f5f5f7] select-text">
       {elements}
     </div>
   );

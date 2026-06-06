@@ -117,7 +117,7 @@ export default function TeacherReview() {
     }
   };
 
-  if (loading) return <div className="min-h-screen bg-black flex items-center justify-center"><div className="w-6 h-6 border-t-2 border-white rounded-full animate-spin" /></div>;
+  if (loading) return <div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center"><div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin" /></div>;
   if (!essay) return null;
 
   let overallBand = 0;
@@ -137,50 +137,50 @@ export default function TeacherReview() {
   const activeFeedbacks = activeTaskTab === 0 ? task1Feedbacks : task2Feedbacks;
 
   return (
-    <div className="flex flex-col h-screen overflow-y-auto lg:overflow-hidden bg-black text-white font-sans relative">
-      <div className="border-b border-zinc-900 p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 z-10 bg-zinc-950 shrink-0">
-        <div><h1 className="text-sm uppercase tracking-wider font-bold text-white">Evaluation suite</h1></div>
-        <div className="flex items-center space-x-6">
+    <div className="flex flex-col h-screen overflow-y-auto lg:overflow-hidden bg-[#0a0a0c] text-white font-sans relative">
+      <div className="border-b border-[#1f1f23] p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 z-10 bg-[#121214] shrink-0">
+        <div><h1 className="text-xs uppercase tracking-wider font-semibold text-[#8a8a8e]">Evaluation suite</h1></div>
+        <div className="flex items-center space-x-4">
           <div className="text-right">
-            <div className={`text-3xl font-mono font-bold tracking-wide ${(!skipScoring && overallBand > 0) ? getBandTextColor(overallBand) : 'text-zinc-500'}`}>
+            <div className={`text-2xl font-mono font-bold tracking-wide ${(!skipScoring && overallBand > 0) ? getBandTextColor(overallBand) : 'text-[#8a8a8e]'}`}>
               {skipScoring ? 'FEEDBACK ONLY' : (overallBand > 0 ? Number(overallBand).toFixed(1) : 'PENDING')}
             </div>
           </div>
-          <button onClick={() => setIsConfirmSubmitOpen(true)} disabled={submitting} className="bg-white hover:bg-neutral-200 text-black font-semibold text-xs uppercase tracking-wider px-5 py-2.5 rounded transition-all cursor-pointer">Save marking</button>
+          <button onClick={() => setIsConfirmSubmitOpen(true)} disabled={submitting} className="bg-white hover:bg-[#cfcfcf] text-black font-semibold text-xs uppercase tracking-wider px-4 py-2 rounded-full transition-colors cursor-pointer">Save marking</button>
         </div>
       </div>
       <div className="flex flex-col lg:flex-row flex-1 overflow-y-auto lg:overflow-hidden relative z-10">
-         <div className="w-full lg:w-1/2 flex flex-col border-r border-zinc-900 bg-zinc-950">
+         <div className="w-full lg:w-1/2 flex flex-col border-r border-[#1f1f23] bg-[#121214]/40">
             {essay.task_type === 'both' && (
-              <div className="flex border-b border-zinc-900 bg-zinc-950 shrink-0 p-1">
-                <button onClick={() => setActiveTaskTab(0)} className={`flex-1 py-3 text-xs uppercase font-bold cursor-pointer ${activeTaskTab === 0 ? 'bg-black text-white border-b border-white' : 'text-neutral-500'}`}>Task 1</button>
-                <button onClick={() => setActiveTaskTab(1)} className={`flex-1 py-3 text-xs uppercase font-bold cursor-pointer ${activeTaskTab === 1 ? 'bg-black text-white border-b border-white' : 'text-neutral-500'}`}>Task 2</button>
+              <div className="flex border-b border-[#1f1f23] bg-[#121214] shrink-0 p-1">
+                <button onClick={() => setActiveTaskTab(0)} className={`flex-1 py-2.5 text-xs uppercase font-semibold cursor-pointer ${activeTaskTab === 0 ? 'bg-black text-white border-b border-white' : 'text-[#8a8a8e]'}`}>Task 1</button>
+                <button onClick={() => setActiveTaskTab(1)} className={`flex-1 py-2.5 text-xs uppercase font-semibold cursor-pointer ${activeTaskTab === 1 ? 'bg-black text-white border-b border-white' : 'text-[#8a8a8e]'}`}>Task 2</button>
               </div>
             )}
             <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4">
-              <div className="bg-black border border-zinc-900 p-4 rounded-lg">
-                <p className="text-xs sm:text-sm text-zinc-300 italic">{activeTopic?.text}</p>
-                {activeTopic?.image && (<img src={activeTopic.image} alt="Task diagram" onClick={() => setIsLightboxOpen(true)} className="max-h-[250px] w-full object-contain rounded mt-3 cursor-zoom-in border border-zinc-900" />)}
+              <div className="bg-black border border-[#1f1f23] p-4 rounded-lg">
+                <p className="text-xs sm:text-sm text-[#f5f5f7] italic">{activeTopic?.text}</p>
+                {activeTopic?.image && (<img src={activeTopic.image} alt="Task diagram" onClick={() => setIsLightboxOpen(true)} className="max-h-[250px] w-full object-contain rounded mt-3 cursor-zoom-in border border-[#1f1f23]" />)}
               </div>
-              <div className="relative text-base sm:text-lg leading-relaxed text-white min-h-[300px] bg-black border border-zinc-900 p-6 rounded select-text">
+              <div className="relative text-base sm:text-lg leading-relaxed text-white min-h-[300px] bg-black border border-[#1f1f23] p-6 rounded select-text">
                 <div ref={textRef} className="absolute opacity-0 pointer-events-none whitespace-pre-wrap font-serif block w-full h-full" style={{ zIndex: -1 }}>{textContent}</div>
-                <div className="whitespace-pre-wrap font-sans selection:bg-blue-600/30 relative z-0 cursor-text" onMouseUp={handleMouseUp}>
+                <div className="whitespace-pre-wrap font-sans selection:bg-[#0071e3]/20 relative z-0 cursor-text" onMouseUp={handleMouseUp}>
                   <HighlightedText text={textContent} comments={comments} taskIndex={activeTaskTab} focusedCommentIndex={focusedCommentIndex} setFocusedCommentIndex={setFocusedCommentIndex} />
                 </div>
               </div>
               {pendingComment && (
-                <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-zinc-950 p-5 border border-zinc-800 w-[90%] sm:w-96 z-50 rounded-lg shadow-2xl space-y-3">
-                  <div className="text-xs bg-black p-3 border border-zinc-900 rounded truncate italic text-neutral-400">&quot;{pendingComment.selected_text}&quot;</div>
-                  <textarea autoFocus value={commentInput} onChange={e => setCommentInput(e.target.value)} className="w-full text-xs p-3 border border-zinc-800 rounded bg-black text-white focus:outline-none focus:border-zinc-700 resize-none" rows={4} placeholder="Write comment for selected text segment..." />
-                  <div className="flex justify-end space-x-2"><button onClick={cancelComment} className="px-3.5 py-1.5 border border-zinc-805 text-zinc-400 hover:text-white rounded text-xs uppercase tracking-wider font-semibold cursor-pointer">Cancel</button><button onClick={saveComment} className="px-3.5 py-1.5 bg-white text-black hover:bg-neutral-200 rounded text-xs uppercase tracking-wider font-semibold cursor-pointer">Save</button></div>
+                <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[#121214] p-5 border border-[#1f1f23] w-[90%] sm:w-96 z-50 rounded-lg shadow-none space-y-3">
+                  <div className="text-xs bg-black p-3 border border-[#1f1f23] rounded truncate italic text-[#8a8a8e]">&quot;{pendingComment.selected_text}&quot;</div>
+                  <textarea autoFocus value={commentInput} onChange={e => setCommentInput(e.target.value)} className="w-full text-xs p-3 border border-[#1f1f23] rounded bg-black text-white focus:outline-none focus:border-[#0071e3] resize-none" rows={4} placeholder="Write comment for selected text segment..." />
+                  <div className="flex justify-end space-x-2"><button onClick={cancelComment} className="px-3 py-1.5 border border-[#1f1f23] text-[#8a8a8e] hover:text-white rounded-full text-xs uppercase tracking-wider font-semibold cursor-pointer">Cancel</button><button onClick={saveComment} className="px-3 py-1.5 bg-white text-black hover:bg-[#cfcfcf] rounded-full text-xs uppercase tracking-wider font-semibold cursor-pointer">Save</button></div>
                 </div>
               )}
               {currentComments.length > 0 && (
                 <div className="mt-6 space-y-3">
                    {comments.map((c, i) => c.task_number === activeTaskTab + 1 && (
-                     <div key={i} className="flex justify-between items-start p-4 rounded border text-xs bg-black border-zinc-900">
-                       <div><div className="text-zinc-500 italic text-xs mb-1">&quot;{c.selected_text}&quot;</div><div className="text-zinc-200 font-semibold">{c.comment_text}</div></div>
-                       <button onClick={() => removeComment(i)} className="text-red-400 hover:underline text-[10px] uppercase ml-4 cursor-pointer">Delete</button>
+                     <div key={i} className="flex justify-between items-start p-4 rounded border text-xs bg-black border-[#1f1f23]">
+                       <div><div className="text-[#8a8a8e] italic text-xs mb-1">&quot;{c.selected_text}&quot;</div><div className="text-[#f5f5f7] font-semibold">{c.comment_text}</div></div>
+                       <button onClick={() => removeComment(i)} className="text-[#ff453a] hover:underline text-[10px] uppercase ml-4 cursor-pointer">Delete</button>
                      </div>
                    ))}
                 </div>
@@ -188,39 +188,38 @@ export default function TeacherReview() {
             </div>
          </div>
          <div className="w-full lg:w-1/2 p-4 sm:p-6 overflow-y-auto bg-black">
-             <div className="mb-6 p-4 rounded bg-zinc-950 border border-zinc-900 flex items-center justify-between">
-               <label htmlFor="skip-scoring" className="text-xs font-bold uppercase tracking-wider text-zinc-400 cursor-pointer">Feedback Only Mode (No Scores)</label>
+             <div className="mb-6 p-4 rounded bg-[#121214] border border-[#1f1f23] flex items-center justify-between">
+               <label htmlFor="skip-scoring" className="text-xs font-bold uppercase tracking-wider text-[#8a8a8e] cursor-pointer">Feedback Only Mode (No Scores)</label>
                <input id="skip-scoring" type="checkbox" checked={skipScoring} onChange={(e) => setSkipScoring(e.target.checked)} className="cursor-pointer" />
              </div>
             <div className="space-y-4">
               {[{ id: 'ta', name: 'Task Achievement (TA)' }, { id: 'cc', name: 'Coherence & Cohesion (CC)' }, { id: 'lr', name: 'Lexical Resource (LR)' }, { id: 'gra', name: 'Grammatical Range (GRA)' }].map((crit) => (
-                <div key={crit.id} className="bg-zinc-950 p-4 rounded border border-zinc-900 space-y-3">
-                  <div className="flex justify-between items-center"><h4 className="font-semibold text-xs uppercase tracking-wider text-zinc-400">{crit.name}</h4>
-                    <select value={(activeScores as any)[crit.id]} onChange={(e) => { const v = parseFloat(e.target.value); if(activeTaskTab===0) setTask1Scores({...task1Scores, [crit.id]:v}); else setTask2Scores({...task2Scores, [crit.id]:v}); }} disabled={skipScoring} className="border border-zinc-900 bg-black text-white p-2 rounded text-xs focus:outline-none focus:border-zinc-800 cursor-pointer">
+                <div key={crit.id} className="bg-[#121214] p-4 rounded border border-[#1f1f23] space-y-3">
+                  <div className="flex justify-between items-center"><h4 className="font-semibold text-xs uppercase tracking-wider text-[#8a8a8e]">{crit.name}</h4>
+                    <select value={(activeScores as any)[crit.id]} onChange={(e) => { const v = parseFloat(e.target.value); if(activeTaskTab===0) setTask1Scores({...task1Scores, [crit.id]:v}); else setTask2Scores({...task2Scores, [crit.id]:v}); }} disabled={skipScoring} className="border border-[#1f1f23] bg-black text-white p-2 rounded text-xs focus:outline-none focus:border-[#374151] cursor-pointer">
                       <option value={0}>-</option>{[0,1,2,3,4,5,5.5,6,6.5,7,7.5,8,8.5,9].map(b => <option key={b} value={b}>{b.toFixed(1)}</option>)}
                     </select>
                   </div>
-                  <input type="text" placeholder="Add specific feedback for this criterion..." className="w-full text-xs p-3 bg-black text-white rounded border border-zinc-900 focus:outline-none focus:border-neutral-850" value={(activeFeedbacks as any)[crit.id]} onChange={(e) => { if(activeTaskTab===0) setTask1Feedbacks({...task1Feedbacks, [crit.id]:e.target.value}); else setTask2Feedbacks({...task2Feedbacks, [crit.id]:e.target.value}); }} />
+                  <input type="text" placeholder="Add specific feedback for this criterion..." className="w-full text-xs p-3 bg-black text-white rounded border border-[#1f1f23] focus:outline-none focus:border-[#0071e3]" value={(activeFeedbacks as any)[crit.id]} onChange={(e) => { if(activeTaskTab===0) setTask1Feedbacks({...task1Feedbacks, [crit.id]:e.target.value}); else setTask2Feedbacks({...task2Feedbacks, [crit.id]:e.target.value}); }} />
                 </div>
               ))}
-              <div className="bg-zinc-950 p-5 rounded border border-zinc-900 space-y-3">
-                 <h4 className="font-semibold text-xs uppercase tracking-wider text-neutral-400 font-bold">Overall Comments</h4>
-                 <textarea placeholder="Write global evaluation overview and recommendations..." className="w-full text-xs p-4 border border-zinc-900 bg-black text-white rounded resize-none focus:outline-none focus:border-zinc-850" rows={6} value={overallFeedback} onChange={e => setOverallFeedback(e.target.value)} />
+              <div className="bg-[#121214] p-5 rounded border border-[#1f1f23] space-y-3">
+                 <h4 className="font-semibold text-xs uppercase tracking-wider text-[#8a8a8e]">Overall Comments</h4>
+                 <textarea placeholder="Write global evaluation overview and recommendations..." className="w-full text-xs p-4 border border-[#1f1f23] bg-black text-white rounded resize-none focus:outline-none focus:border-[#0071e3]" rows={6} value={overallFeedback} onChange={e => setOverallFeedback(e.target.value)} />
               </div>
             </div>
          </div>
       </div>
       {isLightboxOpen && activeTopic?.image && (<div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 cursor-zoom-out" onClick={() => setIsLightboxOpen(false)}><img src={activeTopic.image} alt="Expanded diagram" className="max-w-full max-h-full object-contain rounded" /></div>)}
 
-      {/* Submission confirmation modal */}
       {isConfirmSubmitOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4 shadow-2xl">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-white">Submit mark evaluation?</h3>
-            <p className="text-xs text-zinc-400 leading-relaxed">Please make sure you have fully checked all criterion bands and feedback segments. The student will be notified and can inspect the final results immediately.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
+          <div className="w-full max-w-sm bg-[#121214] border border-[#1f1f23] rounded-xl p-6 space-y-4 shadow-none">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-white">Submit mark evaluation?</h3>
+            <p className="text-xs text-[#8a8a8e] leading-relaxed">Please make sure you have fully checked all criterion bands and feedback segments. The student will be notified and can inspect the final results immediately.</p>
             <div className="flex gap-2.5 justify-end">
-              <button onClick={() => setIsConfirmSubmitOpen(false)} className="px-4 py-2 border border-zinc-800 text-zinc-400 hover:text-white rounded-full text-xs uppercase tracking-wider font-semibold cursor-pointer">Cancel</button>
-              <button onClick={handleSubmit} className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-full text-xs uppercase tracking-wider font-semibold cursor-pointer">Submit</button>
+              <button onClick={() => setIsConfirmSubmitOpen(false)} className="px-3.5 py-1.5 border border-[#1f1f23] text-[#8a8a8e] hover:text-white rounded-full text-[10px] uppercase tracking-wider font-semibold cursor-pointer">Cancel</button>
+              <button onClick={handleSubmit} className="px-3.5 py-1.5 bg-[#0071e3] hover:bg-[#2997ff] text-white rounded-full text-[10px] uppercase tracking-wider font-semibold cursor-pointer">Submit</button>
             </div>
           </div>
         </div>

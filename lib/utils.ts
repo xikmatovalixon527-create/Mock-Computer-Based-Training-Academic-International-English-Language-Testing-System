@@ -28,10 +28,7 @@ export function calculateOverallBand(
   const parsedCc = typeof cc === 'number' ? cc : parseFloat(cc) || 0;
   const parsedLr = typeof lr === 'number' ? lr : parseFloat(lr) || 0;
   const parsedGra = typeof gra === 'number' ? gra : parseFloat(gra) || 0;
-  
   const average = (parsedTa + parsedCc + parsedLr + parsedGra) / 4;
-  
-  // IELTS Rounding rules
   return Math.round(average * 2) / 2;
 }
 
@@ -46,7 +43,6 @@ export function countWords(text: string): number {
   return text.trim().split(/\s+/).filter(word => word.length > 0).length;
 }
 
-// IELTS Band Score Color Utilities
 export function getBandBadgeStyle(score: number | string | null | undefined): string {
   if (score === undefined || score === null || score === '') {
     return 'bg-[var(--color-surface)] text-[var(--color-text-tertiary)] border-[var(--color-border)] font-sans font-bold';
@@ -55,11 +51,11 @@ export function getBandBadgeStyle(score: number | string | null | undefined): st
   if (isNaN(numScore)) {
     return 'bg-[var(--color-surface)] text-[var(--color-text-tertiary)] border-[var(--color-border)] font-sans font-bold';
   }
-  if (numScore <= 5.0) return 'bg-[#EF4444]/15 text-[#EF4444] border-[#EF4444]/30 font-sans font-bold';
-  if (numScore <= 6.0) return 'bg-[#F97316]/15 text-[#F97316] border-[#F97316]/30 font-sans font-bold';
-  if (numScore <= 7.0) return 'bg-[#84CC16]/15 text-[#84CC16] border-[#84CC16]/30 font-sans font-bold';
-  if (numScore <= 8.5) return 'bg-[#A855F7]/15 text-[#A855F7] border-[#A855F7]/30 font-sans font-bold';
-  return 'bg-white/5 rainbow-score-text border-white/10 font-sans font-bold';
+  if (numScore <= 5.0) return 'bg-[#ff453a]/15 text-[#ff453a] border-[#ff453a]/30 font-sans font-bold';
+  if (numScore <= 6.0) return 'bg-[#ff9f0a]/15 text-[#ff9f0a] border-[#ff9f0a]/30 font-sans font-bold';
+  if (numScore <= 7.0) return 'bg-[#30d158]/15 text-[#30d158] border-[#30d158]/30 font-sans font-bold';
+  if (numScore <= 8.5) return 'bg-[#bf5af2]/15 text-[#bf5af2] border-[#bf5af2]/30 font-sans font-bold';
+  return 'bg-[#0071e3]/15 text-[#0071e3] border-[#0071e3]/30 font-sans font-bold';
 }
 
 export function getBandTextColor(score: number | string | null | undefined): string {
@@ -70,9 +66,9 @@ export function getBandTextColor(score: number | string | null | undefined): str
   if (isNaN(numScore)) {
     return 'text-[var(--color-text-tertiary)] font-sans font-bold';
   }
-  if (numScore <= 5.0) return 'text-[#EF4444] font-sans font-bold';
-  if (numScore <= 6.0) return 'text-[#F97316] font-sans font-bold';
-  if (numScore <= 7.0) return 'text-[#84CC16] font-sans font-bold';
-  if (numScore <= 8.5) return 'text-[#A855F7] font-sans font-bold';
-  return 'rainbow-score-text font-sans font-bold';
+  if (numScore <= 5.0) return 'text-[#ff453a] font-sans font-bold';
+  if (numScore <= 6.0) return 'text-[#ff9f0a] font-sans font-bold';
+  if (numScore <= 7.0) return 'text-[#30d158] font-sans font-bold';
+  if (numScore <= 8.5) return 'text-[#bf5af2] font-sans font-bold';
+  return 'text-[#0071e3] font-sans font-bold';
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { FileText, Search, RefreshCw, AlertCircle, Trash2, Users, Edit2, CheckCircle2 } from 'lucide-react';
+import { FileText, Search, RefreshCw, AlertCircle, Trash2, Users, Edit2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Essay } from '@/types';
 import { Navbar } from '@/components/navbar';
@@ -26,7 +26,6 @@ export default function TeacherDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [user, setUser] = useState<{ fullName: string } | null>(null);
   const [viewTab, setViewTab] = useState<'submissions' | 'students'>('submissions');
-
   const [selectedGroup, setSelectedGroup] = useState<string>('all');
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [editName, setEditName] = useState('');
@@ -184,53 +183,46 @@ export default function TeacherDashboard() {
     return student.group_name === selectedGroup;
   });
 
-  const totalSubmissions = essays.length;
-  const pendingGradings = essays.filter(e => e.status !== 'reviewed').length;
-  const completedGradings = essays.filter(e => e.status === 'reviewed').length;
-
   return (
     <Navbar>
-      <div className="space-y-8 max-w-7xl mx-auto py-4 relative">
-        <div className="luxury-grid-overlay opacity-20" />
+      <div className="space-y-6 max-w-7xl mx-auto relative">
+        <div className="luxury-grid-overlay" />
         
-        {/* Banner */}
-        <div className="p-8 bg-zinc-900 border border-zinc-800 rounded-2xl flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-          <div className="space-y-1.5">
-            <span className="text-xs font-bold uppercase tracking-widest text-blue-500 block">Teacher Evaluation Panel</span>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Console Workspace</h1>
+        <div className="p-6 bg-[#121214] border border-[#1f1f23] rounded-xl flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="space-y-1">
+            <span className="text-xs font-semibold uppercase tracking-widest text-[#0071e3] block">Teacher Evaluation Panel</span>
+            <h1 className="text-xl font-medium text-white tracking-tight">Console Workspace</h1>
           </div>
           <button 
             onClick={handleSyncData} 
             disabled={isLoading}
-            className="inline-flex cursor-pointer items-center justify-center px-5 py-2.5 border border-zinc-800 hover:border-zinc-700 bg-zinc-900 hover:bg-zinc-850 text-white text-xs font-bold uppercase rounded-full tracking-wider transition-all disabled:opacity-50"
+            className="inline-flex cursor-pointer items-center justify-center px-4 py-2 border border-[#1f1f23] bg-black hover:bg-[#121214] text-white text-xs font-semibold rounded-full tracking-wider transition-all disabled:opacity-50"
           >
-            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin text-blue-500' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 mr-2 ${isLoading ? 'animate-spin text-[#0071e3]' : ''}`} />
             Sync Dashboard
           </button>
         </div>
 
-        {/* View Tabs */}
-        <div className="flex flex-wrap border-b border-zinc-900 gap-2">
+        <div className="flex flex-wrap border-b border-[#1f1f23] gap-1 bg-black/40 p-1 rounded-lg">
           <button 
             onClick={() => setViewTab('submissions')} 
-            className={`flex items-center space-x-2 py-3 px-5 text-xs font-bold uppercase tracking-wider border-b-2 cursor-pointer transition-all ${viewTab === 'submissions' ? 'border-blue-500 text-blue-500' : 'border-transparent text-zinc-500 hover:text-zinc-300'}`}
+            className={`flex items-center space-x-2 py-2 px-4 text-xs font-semibold tracking-wider rounded-md cursor-pointer transition-all ${viewTab === 'submissions' ? 'bg-[#121214] text-[#0071e3]' : 'text-[#8a8a8e] hover:text-white'}`}
           >
-            <FileText className="w-4.5 h-4.5" />
+            <FileText className="w-4 h-4" />
             <span>Essays ({essays.length})</span>
           </button>
           <button 
             onClick={() => setViewTab('students')} 
-            className={`flex items-center space-x-2 py-3 px-5 text-xs font-bold uppercase tracking-wider border-b-2 cursor-pointer transition-all ${viewTab === 'students' ? 'border-blue-500 text-blue-500' : 'border-transparent text-zinc-500 hover:text-zinc-300'}`}
+            className={`flex items-center space-x-2 py-2 px-4 text-xs font-semibold tracking-wider rounded-md cursor-pointer transition-all ${viewTab === 'students' ? 'bg-[#121214] text-[#0071e3]' : 'text-[#8a8a8e] hover:text-white'}`}
           >
-            <Users className="w-4.5 h-4.5" />
-            <span>Students Directory ({students.length})</span>
+            <Users className="w-4 h-4" />
+            <span>Students ({students.length})</span>
           </button>
         </div>
 
-        {/* Group Filter */}
-        <div className="p-6 bg-zinc-900/60 border border-zinc-850 rounded-2xl space-y-4">
-          <span className="block text-xs uppercase tracking-widest font-bold text-zinc-400">Class Filter</span>
-          <div className="flex flex-wrap gap-2.5 max-h-36 overflow-y-auto pr-2">
+        <div className="p-5 bg-[#121214] border border-[#1f1f23] rounded-xl space-y-3">
+          <span className="block text-[10px] uppercase tracking-widest font-bold text-[#8a8a8e]">Class Filter</span>
+          <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto">
             {[
               { id: 'all', label: 'All Classes' },
               { id: 'even', label: 'Even Days' },
@@ -243,14 +235,14 @@ export default function TeacherDashboard() {
                   type="button" 
                   key={grp.id} 
                   onClick={() => setSelectedGroup(grp.id)} 
-                  className={`px-4 py-2 rounded-full text-xs font-bold border cursor-pointer flex items-center gap-2.5 transition-all ${
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border cursor-pointer flex items-center gap-2 transition-all ${
                     selectedGroup === grp.id 
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/10' 
-                      : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-white'
+                      ? 'bg-[#0071e3] text-white border-[#0071e3]' 
+                      : 'bg-black border-[#1f1f23] hover:border-[#374151] text-[#8a8a8e] hover:text-white'
                   }`}
                 >
                   <span>{grp.label}</span>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${selectedGroup === grp.id ? 'bg-white/20 text-white' : 'bg-zinc-800 text-zinc-500'}`}>{count}</span>
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${selectedGroup === grp.id ? 'bg-white/20 text-white' : 'bg-[#121214] text-[#6e6e73]'}`}>{count}</span>
                 </button>
               );
             })}
@@ -259,40 +251,38 @@ export default function TeacherDashboard() {
 
         {viewTab === 'submissions' && (
           <>
-            {/* Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <div className="p-5 bg-zinc-900/40 border border-zinc-800 rounded-2xl">
-                <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-2">Total Submissions</div>
-                <div className="text-2xl font-bold text-white font-mono">{totalSubmissions}</div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="p-4 bg-[#121214] border border-[#1f1f23] rounded-xl">
+                <div className="text-[10px] text-[#8a8a8e] uppercase tracking-widest font-bold mb-1">Total Submissions</div>
+                <div className="text-xl font-medium text-white font-mono">{essays.length}</div>
               </div>
-              <div className="p-5 bg-zinc-900/40 border border-zinc-800 rounded-2xl">
-                <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-2">Awaiting Assessment</div>
-                <div className="text-2xl font-bold text-amber-500 font-mono">{pendingGradings}</div>
+              <div className="p-4 bg-[#121214] border border-[#1f1f23] rounded-xl">
+                <div className="text-[10px] text-[#8a8a8e] uppercase tracking-widest font-bold mb-1">Awaiting Assessment</div>
+                <div className="text-xl font-medium text-[#ff9f0a] font-mono">{essays.filter(e => e.status !== 'reviewed').length}</div>
               </div>
-              <div className="p-5 bg-zinc-900/40 border border-zinc-800 rounded-2xl">
-                <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-2">Reviewed</div>
-                <div className="text-2xl font-bold text-green-500 font-mono">{completedGradings}</div>
+              <div className="p-4 bg-[#121214] border border-[#1f1f23] rounded-xl">
+                <div className="text-[10px] text-[#8a8a8e] uppercase tracking-widest font-bold mb-1">Reviewed</div>
+                <div className="text-xl font-medium text-[#30d158] font-mono">{essays.filter(e => e.status === 'reviewed').length}</div>
               </div>
             </div>
 
-            {/* Filters bar */}
-            <div className="bg-zinc-900/40 p-4 border border-zinc-850 rounded-2xl flex flex-col lg:flex-row gap-4">
+            <div className="bg-[#121214] p-3 border border-[#1f1f23] rounded-xl flex flex-col lg:flex-row gap-3">
               <div className="relative flex-1">
                 <input 
                   type="text" 
-                  placeholder="Search submissions by prompt keyword or student name..." 
+                  placeholder="Search submissions by prompt or student..." 
                   value={searchQuery} 
                   onChange={e => setSearchQuery(e.target.value)} 
-                  className="w-full px-4 py-2.5 bg-black border border-zinc-800 rounded-xl text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-zinc-700 font-medium" 
+                  className="w-full px-4 py-2 bg-black border border-[#1f1f23] rounded-lg text-xs text-white placeholder-[#6e6e73] focus:outline-none focus:border-[#0071e3] font-medium" 
                 />
               </div>
-              <div className="flex bg-black p-0.5 rounded-full border border-zinc-800 gap-1 shrink-0 self-start">
-                {[{ id: 'all', label: 'All Tasks' }, { id: 'pending', label: 'Unmarked' }, { id: 'reviewed', label: 'Reviewed' }].map((tab) => (
+              <div className="flex bg-black p-0.5 rounded-lg border border-[#1f1f23] gap-1">
+                {[{ id: 'all', label: 'All' }, { id: 'pending', label: 'Unmarked' }, { id: 'reviewed', label: 'Reviewed' }].map((tab) => (
                   <button 
                     type="button" 
                     key={tab.id} 
                     onClick={() => setFilter(tab.id as any)} 
-                    className={`px-4 py-2 rounded-full text-[10px] font-bold uppercase cursor-pointer ${filter === tab.id ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+                    className={`px-3.5 py-1.5 rounded-md text-[10px] font-bold uppercase cursor-pointer ${filter === tab.id ? 'bg-[#121214] text-white' : 'text-[#8a8a8e] hover:text-white'}`}
                   >
                     {tab.label}
                   </button>
@@ -300,46 +290,45 @@ export default function TeacherDashboard() {
               </div>
             </div>
 
-            {/* List */}
-            <div className="bg-zinc-900/30 border border-zinc-850 rounded-2xl overflow-hidden shadow-2xl">
+            <div className="bg-[#121214]/50 border border-[#1f1f23] rounded-xl overflow-hidden">
               {isLoading ? (
-                <div className="p-20 text-center"><RefreshCw className="w-6 h-6 animate-spin mx-auto text-blue-500" /></div>
+                <div className="p-16 text-center"><RefreshCw className="w-5 h-5 animate-spin mx-auto text-[#0071e3]" /></div>
               ) : error ? (
-                <div className="p-12 text-center text-red-500"><AlertCircle className="w-8 h-8 mb-3 mx-auto" />{error}</div>
+                <div className="p-12 text-center text-[#ff453a]"><AlertCircle className="w-6 h-6 mb-2 mx-auto" />{error}</div>
               ) : filteredEssays.length === 0 ? (
-                <div className="p-16 text-center text-zinc-500 uppercase tracking-widest text-xs font-bold">No submissions logged</div>
+                <div className="p-12 text-center text-[#8a8a8e] uppercase tracking-widest text-[10px] font-bold">No submissions logged</div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-xs text-white">
-                    <thead className="bg-zinc-900/80 border-b border-zinc-800">
+                    <thead className="bg-[#121214] border-b border-[#1f1f23]">
                       <tr>
-                        <th className="px-6 py-4.5 text-left font-bold uppercase tracking-wider text-zinc-400">Date</th>
-                        <th className="px-6 py-4.5 text-left font-bold uppercase tracking-wider text-zinc-400">Student Name</th>
-                        <th className="px-6 py-4.5 text-left font-bold uppercase tracking-wider text-zinc-400">Task Form</th>
-                        <th className="px-6 py-4.5 text-left font-bold uppercase tracking-wider text-zinc-400">Group Name</th>
-                        <th className="px-6 py-4.5 text-left font-bold uppercase tracking-wider text-zinc-400">Status</th>
-                        <th className="px-6 py-4.5 text-center font-bold uppercase tracking-wider text-zinc-400">Action</th>
+                        <th className="px-5 py-3 text-left font-bold uppercase tracking-wider text-[#8a8a8e]">Date</th>
+                        <th className="px-5 py-3 text-left font-bold uppercase tracking-wider text-[#8a8a8e]">Student</th>
+                        <th className="px-5 py-3 text-left font-bold uppercase tracking-wider text-[#8a8a8e]">Task</th>
+                        <th className="px-5 py-3 text-left font-bold uppercase tracking-wider text-[#8a8a8e]">Group</th>
+                        <th className="px-5 py-3 text-left font-bold uppercase tracking-wider text-[#8a8a8e]">Status</th>
+                        <th className="px-5 py-3 text-center font-bold uppercase tracking-wider text-[#8a8a8e]">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-zinc-900">
+                    <tbody className="divide-y divide-[#1f1f23]">
                       {filteredEssays.map((essay) => (
-                        <tr key={essay.id} className="hover:bg-zinc-900/10">
-                          <td className="px-6 py-4.5 text-zinc-400 font-mono">{format(new Date(essay.created_at), 'MMM dd, yyyy')}</td>
-                          <td className="px-6 py-4.5 font-bold text-white">{essay.full_name || 'Unknown student'}</td>
-                          <td className="px-6 py-4.5 uppercase font-bold text-neutral-300">{getTaskLabel(essay.task_type)}</td>
-                          <td className="px-6 py-4.5 text-zinc-400">{essay.group_name || 'No Group Assigned'}</td>
-                          <td className="px-6 py-4.5">
+                        <tr key={essay.id} className="hover:bg-[#121214]/30">
+                          <td className="px-5 py-3.5 text-[#8a8a8e] font-mono">{format(new Date(essay.created_at), 'MMM dd, yyyy')}</td>
+                          <td className="px-5 py-3.5 font-semibold text-white">{essay.full_name || 'Unknown'}</td>
+                          <td className="px-5 py-3.5 uppercase text-[#8a8a8e]">{getTaskLabel(essay.task_type)}</td>
+                          <td className="px-5 py-3.5 text-[#8a8a8e]">{essay.group_name || 'No Group'}</td>
+                          <td className="px-5 py-3.5">
                             {essay.status === 'reviewed' ? (
-                              <span className={`px-3 py-1.5 rounded-full border text-[10px] tracking-wider uppercase font-extrabold ${getBandBadgeStyle(essay.overall_band)}`}>
-                                {essay.overall_band ? `Band ${Number(essay.overall_band).toFixed(1)}` : 'Feedback Only'}
+                              <span className={`px-2.5 py-1 rounded-full border text-[9px] tracking-wider uppercase font-bold ${getBandBadgeStyle(essay.overall_band)}`}>
+                                {essay.overall_band ? `Band ${Number(essay.overall_band).toFixed(1)}` : 'Feedback'}
                               </span>
                             ) : (
-                              <span className="text-amber-500 font-bold uppercase tracking-wider text-[10px] bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-full">Awaiting Evaluation</span>
+                              <span className="text-[#ff9f0a] font-bold uppercase tracking-wider text-[9px] bg-[#ff9f0a]/10 border border-[#ff9f0a]/20 px-2.5 py-1 rounded-full">Awaiting Mark</span>
                             )}
                           </td>
-                          <td className="px-6 py-4.5 text-center space-x-2">
-                            <Link href={`/teacher/review/${essay.id}`} className="inline-flex px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase rounded-full tracking-wider transition-all">Evaluate</Link>
-                            <button onClick={() => openDeleteEssayConfirm(essay.id)} className="p-2 text-zinc-500 hover:text-red-500 transition-all cursor-pointer"><Trash2 className="w-4.5 h-4.5" /></button>
+                          <td className="px-5 py-3.5 text-center space-x-2">
+                            <Link href={`/teacher/review/${essay.id}`} className="inline-flex px-3 py-1.5 bg-[#0071e3] hover:bg-[#2997ff] text-white font-medium uppercase text-[10px] rounded-full transition-all">Evaluate</Link>
+                            <button onClick={() => openDeleteEssayConfirm(essay.id)} className="p-1.5 text-[#8a8a8e] hover:text-[#ff453a] transition-all cursor-pointer"><Trash2 className="w-4 h-4" /></button>
                           </td>
                         </tr>
                       ))}
@@ -352,42 +341,42 @@ export default function TeacherDashboard() {
         )}
 
         {viewTab === 'students' && (
-          <div className="space-y-6">
-            <div className="bg-zinc-900/30 border border-zinc-850 rounded-2xl overflow-hidden shadow-2xl">
-              <div className="p-5 border-b border-zinc-850 bg-zinc-900/40 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-                <h3 className="text-sm uppercase tracking-wider font-bold text-white">Student Roster</h3>
+          <div className="space-y-4">
+            <div className="bg-[#121214]/50 border border-[#1f1f23] rounded-xl overflow-hidden">
+              <div className="p-4 border-b border-[#1f1f23] bg-[#121214] flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                <h3 className="text-xs uppercase tracking-wider font-bold text-white">Student Roster</h3>
                 <input 
                   type="text" 
                   placeholder="Filter student profiles..." 
                   value={searchQuery} 
                   onChange={e => setSearchQuery(e.target.value)} 
-                  className="w-full sm:w-72 px-4 py-2.5 bg-black border border-zinc-800 rounded-xl text-xs text-white focus:outline-none focus:border-zinc-700 font-medium" 
+                  className="w-full sm:w-64 px-4 py-2 bg-black border border-[#1f1f23] rounded-lg text-xs text-white focus:outline-none focus:border-[#0071e3] font-medium" 
                 />
               </div>
               {filteredStudentsGrouped.length === 0 ? (
-                <div className="p-16 text-center text-zinc-500 uppercase tracking-widest text-xs font-bold">No students registered</div>
+                <div className="p-12 text-center text-[#8a8a8e] uppercase tracking-widest text-[10px] font-bold">No students registered</div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-xs text-white">
-                    <thead className="bg-zinc-900/80 border-b border-zinc-800">
+                    <thead className="bg-[#121214] border-b border-[#1f1f23]">
                       <tr>
-                        <th className="px-6 py-4 text-left font-bold uppercase tracking-wider text-zinc-400">Date Joined</th>
-                        <th className="px-6 py-4 text-left font-bold uppercase tracking-wider text-zinc-400">Student Profile Name</th>
-                        <th className="px-6 py-4 text-left font-bold uppercase tracking-wider text-zinc-400">Class Assignment</th>
-                        <th className="px-6 py-4 text-left font-bold uppercase tracking-wider text-zinc-400">Total Submissions</th>
-                        <th className="px-6 py-4 text-center font-bold uppercase tracking-wider text-zinc-400 font-mono">Actions</th>
+                        <th className="px-5 py-3 text-left font-bold uppercase tracking-wider text-[#8a8a8e]">Date Joined</th>
+                        <th className="px-5 py-3 text-left font-bold uppercase tracking-wider text-[#8a8a8e]">Name</th>
+                        <th className="px-5 py-3 text-left font-bold uppercase tracking-wider text-[#8a8a8e]">Class</th>
+                        <th className="px-5 py-3 text-left font-bold uppercase tracking-wider text-[#8a8a8e]">Essays</th>
+                        <th className="px-5 py-3 text-center font-bold uppercase tracking-wider text-[#8a8a8e]">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-zinc-900">
+                    <tbody className="divide-y divide-[#1f1f23]">
                       {filteredStudentsGrouped.map((student) => (
-                        <tr key={student.id} className="hover:bg-zinc-900/10">
-                          <td className="px-6 py-4.5 text-zinc-400 font-mono">{format(new Date(student.created_at), 'MMM dd, yyyy')}</td>
-                          <td className="px-6 py-4.5 font-bold text-white text-sm">{student.full_name}</td>
-                          <td className="px-6 py-4.5 uppercase font-bold text-zinc-300">{student.group_name || 'No assignment'}</td>
-                          <td className="px-6 py-4.5 text-zinc-400 font-mono font-bold text-sm">{student.essay_count}</td>
-                          <td className="px-6 py-4.5 text-center space-x-2">
-                            <button onClick={() => { setEditingStudent(student); setEditName(student.full_name); setEditGroup(student.group_name || STUDENT_GROUPS[0]); }} className="px-4 py-2 bg-zinc-900 hover:bg-zinc-850 text-white rounded-full font-bold uppercase tracking-wider transition-all cursor-pointer"><Edit2 className="w-3.5 h-3.5 inline mr-1" />Edit</button>
-                            <button onClick={() => openDeleteStudentConfirm(student.id)} className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-full font-bold uppercase tracking-wider transition-all cursor-pointer"><Trash2 className="w-3.5 h-3.5 inline mr-1" />Delete</button>
+                        <tr key={student.id} className="hover:bg-[#121214]/30">
+                          <td className="px-5 py-3.5 text-[#8a8a8e] font-mono">{format(new Date(student.created_at), 'MMM dd, yyyy')}</td>
+                          <td className="px-5 py-3.5 font-semibold text-white">{student.full_name}</td>
+                          <td className="px-5 py-3.5 uppercase text-[#8a8a8e]">{student.group_name || 'No assignment'}</td>
+                          <td className="px-5 py-3.5 text-[#8a8a8e] font-mono font-bold">{student.essay_count}</td>
+                          <td className="px-5 py-3.5 text-center space-x-2">
+                            <button onClick={() => { setEditingStudent(student); setEditName(student.full_name); setEditGroup(student.group_name || STUDENT_GROUPS[0]); }} className="px-3.5 py-1.5 bg-black hover:bg-[#121214] border border-[#1f1f23] text-white rounded-full text-[10px] font-semibold uppercase tracking-wider transition-all cursor-pointer"><Edit2 className="w-3.5 h-3.5 inline mr-1" />Edit</button>
+                            <button onClick={() => openDeleteStudentConfirm(student.id)} className="px-3.5 py-1.5 bg-[#ff453a]/10 hover:bg-[#ff453a]/20 text-[#ff453a] rounded-full text-[10px] font-semibold uppercase tracking-wider transition-all cursor-pointer"><Trash2 className="w-3.5 h-3.5 inline mr-1" />Delete</button>
                           </td>
                         </tr>
                       ))}
@@ -400,39 +389,39 @@ export default function TeacherDashboard() {
         )}
 
         {editingStudent && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-            <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4 shadow-2xl">
-              <div className="flex justify-between items-center pb-3 border-b border-zinc-800">
-                <h3 className="text-sm uppercase tracking-wider font-bold text-white">Modify Profile Group</h3>
-                <button onClick={() => setEditingStudent(null)} className="text-xs text-zinc-500 hover:text-white cursor-pointer">Close</button>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <div className="w-full max-w-sm bg-[#121214] border border-[#1f1f23] rounded-xl p-6 space-y-4 shadow-none">
+              <div className="flex justify-between items-center pb-2 border-b border-[#1f1f23]">
+                <h3 className="text-xs uppercase tracking-wider font-bold text-white">Modify Profile Group</h3>
+                <button onClick={() => setEditingStudent(null)} className="text-xs text-[#8a8a8e] hover:text-white cursor-pointer">Close</button>
               </div>
               <form onSubmit={handleSaveStudentEdit} className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="block text-[10px] uppercase tracking-wider font-bold text-zinc-400">FullName</label>
-                  <input type="text" value={editName} onChange={e => setEditName(e.target.value)} className="w-full px-4 py-2.5 bg-black border border-zinc-800 rounded-xl text-xs text-white focus:outline-none focus:border-zinc-700" required />
+                <div className="space-y-1">
+                  <label className="block text-[10px] uppercase tracking-wider font-bold text-[#8a8a8e]">Full Name</label>
+                  <input type="text" value={editName} onChange={e => setEditName(e.target.value)} className="w-full px-3 py-2 bg-black border border-[#1f1f23] rounded-lg text-xs text-white focus:outline-none focus:border-[#0071e3]" required />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="block text-[10px] uppercase tracking-wider font-bold text-zinc-400">Group Name</label>
-                  <select value={editGroup} onChange={e => setEditGroup(e.target.value)} className="w-full px-4 py-2.5 bg-black border border-zinc-800 rounded-xl text-xs text-white focus:outline-none focus:border-zinc-700 cursor-pointer">
+                <div className="space-y-1">
+                  <label className="block text-[10px] uppercase tracking-wider font-bold text-[#8a8a8e]">Group Name</label>
+                  <select value={editGroup} onChange={e => setEditGroup(e.target.value)} className="w-full px-3 py-2 bg-black border border-[#1f1f23] rounded-lg text-xs text-white focus:outline-none focus:border-[#0071e3] cursor-pointer">
                     {STUDENT_GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
                   </select>
                 </div>
-                <button type="submit" disabled={isSavingEdit} className="w-full py-2.5 bg-white hover:bg-zinc-200 text-black font-bold text-xs uppercase tracking-wider rounded-full transition-all cursor-pointer">{isSavingEdit ? 'Saving...' : 'Save Settings'}</button>
+                <button type="submit" disabled={isSavingEdit} className="w-full py-2 bg-[#0071e3] hover:bg-[#2997ff] text-white font-semibold text-xs uppercase tracking-wider rounded-full transition-all cursor-pointer">{isSavingEdit ? 'Saving...' : 'Save Settings'}</button>
               </form>
             </div>
           </div>
         )}
 
         {confirmModal.isOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-            <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-5 shadow-2xl">
-              <div className="space-y-2">
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-white">{confirmModal.title}</h3>
-                <p className="text-xs text-zinc-400 leading-relaxed">{confirmModal.description}</p>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <div className="w-full max-w-xs bg-[#121214] border border-[#1f1f23] rounded-xl p-5 space-y-4 shadow-none">
+              <div className="space-y-1">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-white">{confirmModal.title}</h3>
+                <p className="text-xs text-[#8a8a8e] leading-relaxed">{confirmModal.description}</p>
               </div>
-              <div className="flex gap-2.5 justify-end">
-                <button onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))} className="px-4 py-2 border border-zinc-800 text-zinc-400 hover:text-white rounded-full text-xs uppercase tracking-wider font-semibold cursor-pointer">Cancel</button>
-                <button onClick={executeModalAction} className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-full text-xs uppercase tracking-wider font-semibold cursor-pointer">Delete</button>
+              <div className="flex gap-2 justify-end">
+                <button onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))} className="px-3.5 py-1.5 border border-[#1f1f23] text-[#8a8a8e] hover:text-white rounded-full text-[10px] uppercase tracking-wider font-semibold cursor-pointer">Cancel</button>
+                <button onClick={executeModalAction} className="px-3.5 py-1.5 bg-[#ff453a] hover:bg-[#ff453a]/80 text-white rounded-full text-[10px] uppercase tracking-wider font-semibold cursor-pointer">Delete</button>
               </div>
             </div>
           </div>

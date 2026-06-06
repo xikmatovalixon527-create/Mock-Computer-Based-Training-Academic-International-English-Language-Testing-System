@@ -5,7 +5,6 @@
   --font-serif: var(--font-serif), Georgia, serif;
   --font-mono: var(--font-mono), monospace;
 
-  /* Premium Hybrid Palette: Vercel Dark Charcoal + Apple Active Blue */
   --color-bg: #09090b;
   --color-bg-elevated: #0f0f11;
   --color-surface: #18181b;
@@ -13,12 +12,10 @@
   --color-border: #27272a;
   --color-border-strong: #3f3f46;
   
-  /* High-Contrast Texts */
   --color-text: #ffffff;
   --color-text-secondary: #a1a1aa;
   --color-text-tertiary: #71717a;
   
-  /* Interactive Accents */
   --color-primary: #0071e3;
   --color-primary-hover: #0077ed;
   --color-primary-soft: rgba(0, 113, 227, 0.12);

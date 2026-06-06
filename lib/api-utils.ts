@@ -12,20 +12,16 @@ export function successResponse<T>(data: T) {
 
 export async function requireAuth(allowedRoles?: Role[]) {
   const session = await getSession();
-  
   if (!session) {
     return { error: errorResponse('Unauthorized', 401) };
   }
-  
   if (allowedRoles && !allowedRoles.includes(session.role)) {
     return { error: errorResponse('Forbidden', 403) };
   }
-  
   return { session };
 }
 
 export function handleApiError(err: unknown) {
   const message = err instanceof Error ? err.message : 'Internal server error';
-  console.error('API Error:', message, err);
   return errorResponse(message, 500);
 }

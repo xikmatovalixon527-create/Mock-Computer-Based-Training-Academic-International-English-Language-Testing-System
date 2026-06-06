@@ -12,7 +12,7 @@ export function Navbar({ children }: { children?: React.ReactNode }) {
     fetch('/api/me')
       .then(r => r.json())
       .then(d => d.user && setUser(d.user))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const handleLogout = async () => {
@@ -36,7 +36,7 @@ export function Navbar({ children }: { children?: React.ReactNode }) {
                 <BookOpen className="w-5 h-5 text-blue-500 transition-transform group-hover:scale-110" />
               </div>
               <span className="text-base font-bold tracking-widest uppercase">
-                IELTS <span className="text-blue-500">CBT</span>
+                <span className="text-blue-500">Mock Computer Based Training Academic International English Language Testing System</span>
               </span>
             </Link>
 

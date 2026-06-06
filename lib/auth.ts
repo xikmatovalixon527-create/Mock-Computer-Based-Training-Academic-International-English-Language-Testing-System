@@ -19,7 +19,7 @@ export async function verifyToken(token: string) {
       algorithms: ['HS256'],
     });
     return payload as { id: string; fullName: string; role: Role };
-  } catch (error) {
+  } catch {
     return null;
   }
 }

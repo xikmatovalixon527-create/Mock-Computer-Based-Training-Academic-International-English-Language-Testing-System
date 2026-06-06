@@ -1,4 +1,5 @@
 'use client';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -43,46 +44,43 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden flex items-center justify-center px-4 py-12 bg-black text-white">
-      <div className="luxury-grid-overlay opacity-30" />
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center px-4 py-12 bg-[#0a0a0c] text-[#f5f5f7]">
+      <div className="luxury-grid-overlay" />
 
-      <div className="w-full max-w-[440px] z-10 space-y-8">
-        {/* Header */}
-        <div className="text-center space-y-3">
-          <div className="inline-flex w-12 h-12 rounded-full bg-zinc-900 items-center justify-center border border-zinc-800 shadow-xl mb-2">
-            <BookOpen className="w-5 h-5 text-blue-500" />
+      <div className="w-full max-w-[400px] z-10 space-y-8">
+        <div className="text-center space-y-2">
+          <div className="inline-flex w-10 h-10 rounded-full bg-[#121214] items-center justify-center border border-[#1f1f23] mb-2">
+            <BookOpen className="w-4 h-4 text-[#0071e3]" />
           </div>
-          <h1 className="text-2xl font-bold uppercase tracking-widest text-white">Create Account</h1>
-          <p className="text-xs uppercase tracking-wider text-zinc-500">
+          <h1 className="text-xl font-medium tracking-tight text-white">Create Account</h1>
+          <p className="text-xs tracking-wide text-[#8a8a8e]">
             Register as a Student or Teacher
           </p>
         </div>
 
-        {/* Card */}
-        <div className="bg-zinc-900 border border-zinc-850 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6">
+        <div className="bg-[#121214] border border-[#1f1f23] rounded-xl p-6 shadow-none space-y-6">
           {error && (
-            <div className="flex items-start gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20">
-              <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-              <span className="text-xs text-red-400 font-semibold uppercase tracking-wider">{error}</span>
+            <div className="flex items-start gap-2.5 p-3 rounded-lg bg-[#ff453a]/10 border border-[#ff453a]/20">
+              <AlertCircle className="w-4 h-4 text-[#ff453a] shrink-0 mt-0.5" />
+              <span className="text-xs text-[#ff453a] font-medium tracking-normal">{error}</span>
             </div>
           )}
 
-          <form onSubmit={handleRegister} className="space-y-5">
-            {/* Role selection */}
-            <div className="space-y-2">
-              <label className="block text-xs uppercase tracking-wider font-bold text-zinc-400">Account Type</label>
-              <div className="grid grid-cols-2 gap-3">
+          <form onSubmit={handleRegister} className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-[#8a8a8e]">Account Type</label>
+              <div className="grid grid-cols-2 gap-2.5">
                 <button
                   type="button"
                   onClick={() => setRole('student')}
-                  className={`py-4 flex flex-col items-center justify-center gap-2 rounded-xl border transition-all cursor-pointer ${
+                  className={`py-3.5 flex flex-col items-center justify-center gap-2 rounded-lg border transition-all cursor-pointer ${
                     role === 'student'
-                      ? 'border-blue-500 bg-blue-500/5 shadow-md shadow-blue-500/5'
-                      : 'border-zinc-800 bg-black hover:border-zinc-700'
+                      ? 'border-[#0071e3] bg-[#0071e3]/5'
+                      : 'border-[#1f1f23] bg-black hover:border-[#374151]'
                   }`}
                 >
-                  <Users className={`w-4 h-4 ${role === 'student' ? 'text-blue-500' : 'text-zinc-500'}`} />
-                  <span className={`text-[10px] uppercase tracking-wider font-bold ${role === 'student' ? 'text-white' : 'text-zinc-400'}`}>
+                  <Users className={`w-4 h-4 ${role === 'student' ? 'text-[#0071e3]' : 'text-[#6e6e73]'}`} />
+                  <span className={`text-[10px] font-bold uppercase tracking-wider ${role === 'student' ? 'text-white' : 'text-[#8a8a8e]'}`}>
                     Student
                   </span>
                 </button>
@@ -90,59 +88,59 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setRole('teacher')}
-                  className={`py-4 flex flex-col items-center justify-center gap-2 rounded-xl border transition-all cursor-pointer ${
+                  className={`py-3.5 flex flex-col items-center justify-center gap-2 rounded-lg border transition-all cursor-pointer ${
                     role === 'teacher'
-                      ? 'border-blue-500 bg-blue-500/5 shadow-md shadow-blue-500/5'
-                      : 'border-zinc-800 bg-black hover:border-zinc-700'
+                      ? 'border-[#0071e3] bg-[#0071e3]/5'
+                      : 'border-[#1f1f23] bg-black hover:border-[#374151]'
                   }`}
                 >
-                  <GraduationCap className={`w-4 h-4 ${role === 'teacher' ? 'text-blue-500' : 'text-zinc-500'}`} />
-                  <span className={`text-[10px] uppercase tracking-wider font-bold ${role === 'teacher' ? 'text-white' : 'text-zinc-400'}`}>
+                  <GraduationCap className={`w-4 h-4 ${role === 'teacher' ? 'text-[#0071e3]' : 'text-[#6e6e73]'}`} />
+                  <span className={`text-[10px] font-bold uppercase tracking-wider ${role === 'teacher' ? 'text-white' : 'text-[#8a8a8e]'}`}>
                     Teacher
                   </span>
                 </button>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="block text-xs uppercase tracking-wider font-bold text-zinc-400">Full Name</label>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-[#8a8a8e]">Full Name</label>
               <input
                 type="text"
                 required
                 value={fullName}
                 onChange={e => setFullName(e.target.value)}
-                className="w-full h-11 px-4 bg-black border border-zinc-800 rounded-xl text-xs tracking-wider text-white placeholder:text-zinc-700 focus:outline-none focus:border-blue-500 transition-all font-medium"
+                className="w-full h-10 px-3 bg-black border border-[#1f1f23] rounded-md text-sm text-white placeholder-[#6e6e73] focus:outline-none focus:border-[#0071e3] transition-colors"
                 placeholder="Enter your full name"
                 autoComplete="name"
               />
             </div>
 
             {role === 'student' && (
-              <div className="space-y-2">
-                <label className="block text-xs uppercase tracking-wider font-bold text-zinc-400">Class Group Assignment</label>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-medium text-[#8a8a8e]">Class Group Assignment</label>
                 <select
                   required
                   value={groupName}
                   onChange={e => setGroupName(e.target.value)}
-                  className="w-full h-11 px-4 bg-black border border-zinc-800 rounded-xl text-xs tracking-wider text-white focus:outline-none focus:border-blue-500 transition-all font-medium cursor-pointer"
+                  className="w-full h-10 px-3 bg-black border border-[#1f1f23] rounded-md text-sm text-white focus:outline-none focus:border-[#0071e3] transition-colors cursor-pointer"
                 >
-                  <option value="" disabled className="text-zinc-700">-- Select Your Group --</option>
+                  <option value="" disabled className="text-[#6e6e73]">-- Select Your Group --</option>
                   {STUDENT_GROUPS.map(g => (
-                    <option key={g} value={g} className="text-white bg-zinc-900">{g}</option>
+                    <option key={g} value={g} className="text-white bg-[#121214]">{g}</option>
                   ))}
                 </select>
               </div>
             )}
 
-            <div className="space-y-2">
-              <label className="block text-xs uppercase tracking-wider font-bold text-zinc-400">Security Password</label>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-[#8a8a8e]">Security Password</label>
               <input
                 type="password"
                 required
                 minLength={6}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                className="w-full h-11 px-4 bg-black border border-zinc-800 rounded-xl text-xs tracking-wider text-white placeholder:text-zinc-700 focus:outline-none focus:border-blue-500 transition-all font-medium"
+                className="w-full h-10 px-3 bg-black border border-[#1f1f23] rounded-md text-sm text-white placeholder-[#6e6e73] focus:outline-none focus:border-[#0071e3] transition-colors"
                 placeholder="Minimum 6 characters"
                 autoComplete="new-password"
               />
@@ -151,17 +149,17 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-11 flex items-center justify-center gap-2 bg-white hover:bg-zinc-200 text-black font-bold text-xs uppercase tracking-wider rounded-full shadow-lg cursor-pointer transition-all disabled:opacity-40 disabled:pointer-events-none active:scale-95"
+              className="w-full h-10 flex items-center justify-center gap-2 bg-[#0071e3] hover:bg-[#2997ff] text-white font-medium text-sm rounded-full transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
             >
               <span>{loading ? 'Processing...' : 'Register'}</span>
-              {!loading && <ArrowRight className="w-4 h-4 text-black" />}
+              {!loading && <ArrowRight className="w-4 h-4 text-white" />}
             </button>
           </form>
         </div>
 
-        <p className="text-center text-xs uppercase tracking-wider text-zinc-500">
+        <p className="text-center text-xs text-[#8a8a8e]">
           Already registered?{' '}
-          <Link href="/login" className="font-bold text-blue-500 hover:underline">
+          <Link href="/login" className="font-medium text-[#0071e3] hover:underline">
             Sign In
           </Link>
         </p>

@@ -1,4 +1,5 @@
 'use client';
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -97,53 +98,53 @@ export default function ExamRoom() {
   const currentTopic = activeTab === 0 ? topicData.task1 : topicData.task2;
 
   return (
-    <div className="h-screen flex flex-col bg-zinc-950 overflow-hidden text-white relative font-sans">
-      <header className="shrink-0 bg-zinc-900 border-b border-zinc-800 px-6 py-4 flex items-center justify-between">
+    <div className="h-screen flex flex-col bg-black overflow-hidden text-white relative font-sans">
+      <header className="shrink-0 bg-[#121214] border-b border-[#1f1f23] px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <span className="text-xs uppercase tracking-widest font-bold text-zinc-400">Exam Cockpit</span>
+          <span className="text-xs uppercase tracking-widest font-bold text-[#8a8a8e]">Exam Cockpit</span>
           {config.taskType === 'both' ? (
-            <div className="flex bg-black rounded-full border border-zinc-850 p-1">
-              <button onClick={() => setActiveTab(0)} className={`px-4 py-1.5 text-xs uppercase font-bold rounded-full cursor-pointer transition-all ${activeTab === 0 ? 'bg-zinc-800 text-white' : 'text-zinc-500'}`}>Task 1</button>
-              <button onClick={() => setActiveTab(1)} className={`px-4 py-1.5 text-xs uppercase font-bold rounded-full cursor-pointer transition-all ${activeTab === 1 ? 'bg-zinc-800 text-white' : 'text-zinc-500'}`}>Task 2</button>
+            <div className="flex bg-black rounded-full border border-[#1f1f23] p-1">
+              <button onClick={() => setActiveTab(0)} className={`px-4 py-1.5 text-xs uppercase font-bold rounded-full cursor-pointer transition-all ${activeTab === 0 ? 'bg-[#121214] text-white' : 'text-[#8a8a8e]'}`}>Task 1</button>
+              <button onClick={() => setActiveTab(1)} className={`px-4 py-1.5 text-xs uppercase font-bold rounded-full cursor-pointer transition-all ${activeTab === 1 ? 'bg-[#121214] text-white' : 'text-[#8a8a8e]'}`}>Task 2</button>
             </div>
-          ) : <span className="text-xs font-bold uppercase tracking-wider text-blue-500">Task {config.taskType === 'task1' ? '1' : '2'}</span>}
+          ) : <span className="text-xs font-bold uppercase tracking-wider text-[#0071e3]">Task {config.taskType === 'task1' ? '1' : '2'}</span>}
         </div>
-        {!config.noTimer && <div className="text-lg font-bold font-mono text-blue-500 bg-black px-4 py-2 border border-zinc-800 rounded-full">{formatTime(timeLeft)}</div>}
+        {!config.noTimer && <div className="text-sm font-bold font-mono text-[#0071e3] bg-black px-4 py-1.5 border border-[#1f1f23] rounded-full">{formatTime(timeLeft)}</div>}
       </header>
       <main className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
-        <div className={`w-full lg:w-1/2 flex flex-col bg-zinc-900/60 lg:border-r border-zinc-850 ${showPrompt ? 'h-[40vh] lg:h-auto' : ''}`}>
-          <div className="px-4 py-3 bg-zinc-900 flex justify-between" onClick={() => { if (window.innerWidth < 1024) setShowPrompt(!showPrompt); }}>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Prompt Instructions</span>
+        <div className={`w-full lg:w-1/2 flex flex-col bg-[#121214]/50 lg:border-r border-[#1f1f23] ${showPrompt ? 'h-[40vh] lg:h-auto' : ''}`}>
+          <div className="px-4 py-3 bg-[#121214] flex justify-between" onClick={() => { if (window.innerWidth < 1024) setShowPrompt(!showPrompt); }}>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#8a8a8e]">Prompt Instructions</span>
             <ChevronDown className={`lg:hidden w-4 h-4 ${showPrompt ? 'rotate-180' : ''}`} />
           </div>
           {showPrompt && (
             <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-4">
-              <div className="p-6 bg-zinc-950 border border-zinc-800 rounded-2xl"><p className="text-base sm:text-lg leading-relaxed text-zinc-200 whitespace-pre-wrap">{currentTopic?.text}</p></div>
-              {currentTopic?.image && <img src={currentTopic.image} alt="Expanded prompt diagram" onClick={() => setIsLightboxOpen(true)} className="max-h-[350px] mx-auto cursor-zoom-in rounded border border-zinc-850" />}
+              <div className="p-6 bg-black border border-[#1f1f23] rounded-xl"><p className="text-base sm:text-lg leading-relaxed text-[#f5f5f7] whitespace-pre-wrap">{currentTopic?.text}</p></div>
+              {currentTopic?.image && <img src={currentTopic.image} alt="Expanded prompt diagram" onClick={() => setIsLightboxOpen(true)} className="max-h-[350px] mx-auto cursor-zoom-in rounded border border-[#1f1f23]" />}
             </div>
           )}
         </div>
         <div className="w-full lg:w-1/2 flex flex-col min-h-0 flex-1 relative bg-black">
-          <textarea className="flex-1 w-full p-6 sm:p-8 text-xl bg-transparent resize-none focus:outline-none text-white font-sans leading-relaxed selection:bg-blue-600/30" value={texts[activeTab]} onChange={e => handleTextChange(e.target.value)} disabled={isSubmitting} spellCheck={false} placeholder="Start typing your response document here..." />
-          <div className="px-6 py-4 bg-zinc-950 text-xs flex justify-between font-mono border-t border-zinc-900">
-            <span className={wordCount < minWords ? 'text-amber-500' : 'text-green-500'}>{wordCount} / {minWords} Words</span>
+          <textarea className="flex-1 w-full p-6 sm:p-8 text-lg bg-transparent resize-none focus:outline-none text-white font-sans leading-relaxed selection:bg-[#0071e3]/20" value={texts[activeTab]} onChange={e => handleTextChange(e.target.value)} disabled={isSubmitting} spellCheck={false} placeholder="Start typing your response document here..." />
+          <div className="px-6 py-4 bg-[#121214] text-xs flex justify-between font-mono border-t border-[#1f1f23]">
+            <span className={wordCount < minWords ? 'text-[#ff9f0a]' : 'text-[#30d158]'}>{wordCount} / {minWords} Words</span>
           </div>
         </div>
       </main>
-      <footer className="shrink-0 border-t border-zinc-900 bg-zinc-950 px-6 h-20 flex items-center justify-between">
-        <span className="text-xs uppercase font-bold tracking-widest text-zinc-500">IELTS Academic Module Practice</span>
-        <button onClick={() => setIsConfirmOpen(true)} disabled={isSubmitting} className="bg-white hover:bg-zinc-200 text-black px-6 py-3 text-xs font-bold uppercase tracking-wider rounded-full cursor-pointer active:scale-95 transition-all">Submit Evaluation</button>
+      <footer className="shrink-0 border-t border-[#1f1f23] bg-[#121214] px-6 h-16 flex items-center justify-between">
+        <span className="text-xs uppercase font-bold tracking-widest text-[#8a8a8e]">IELTS Academic Module Practice</span>
+        <button onClick={() => setIsConfirmOpen(true)} disabled={isSubmitting} className="bg-white hover:bg-[#cfcfcf] text-black px-5 py-2 text-xs font-bold uppercase tracking-wider rounded-full cursor-pointer transition-colors">Submit Evaluation</button>
       </footer>
       {isLightboxOpen && currentTopic?.image && (<div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 cursor-zoom-out" onClick={() => setIsLightboxOpen(false)}><img src={currentTopic.image} alt="Expanded diagram" className="max-w-full max-h-full object-contain rounded" /></div>)}
 
       {isConfirmOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
-          <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4 shadow-2xl">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-white">Confirm Final Submission</h3>
-            <p className="text-xs text-zinc-400 leading-relaxed">Please make sure you have fully checked all criterion points and spelling elements. You cannot modify your answers after final submission.</p>
-            <div className="flex gap-2.5 justify-end">
-              <button onClick={() => setIsConfirmOpen(false)} className="px-4 py-2 border border-zinc-800 text-neutral-400 hover:text-white rounded-full text-xs uppercase tracking-wider font-semibold cursor-pointer">Cancel</button>
-              <button onClick={handleForceSubmit} className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-full text-xs uppercase tracking-wider font-semibold cursor-pointer">Submit</button>
+          <div className="w-full max-w-xs bg-[#121214] border border-[#1f1f23] rounded-xl p-5 space-y-4 shadow-none">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-white">Confirm Final Submission</h3>
+            <p className="text-xs text-[#8a8a8e] leading-relaxed">Please make sure you have fully checked all criterion points and spelling elements. You cannot modify your answers after final submission.</p>
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setIsConfirmOpen(false)} className="px-3.5 py-1.5 border border-[#1f1f23] text-[#8a8a8e] hover:text-white rounded-full text-[10px] uppercase tracking-wider font-semibold cursor-pointer">Cancel</button>
+              <button onClick={handleForceSubmit} className="px-3.5 py-1.5 bg-[#0071e3] hover:bg-[#2997ff] text-white rounded-full text-[10px] uppercase tracking-wider font-semibold cursor-pointer">Submit</button>
             </div>
           </div>
         </div>

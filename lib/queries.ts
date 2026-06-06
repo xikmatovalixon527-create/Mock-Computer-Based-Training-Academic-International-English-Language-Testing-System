@@ -53,6 +53,10 @@ export async function deleteEssay(id: string) {
   await supabaseAdmin.from('essays').delete().eq('id', id);
 }
 
+export async function deleteLiveDraft(studentId: string) {
+  await supabaseAdmin.from('essays').delete().eq('student_id', studentId).eq('status', 'draft');
+}
+
 export async function getReviewByEssayId(essayId: string) {
   const { data: review } = await supabaseAdmin.from('reviews').select('*').eq('essay_id', essayId).maybeSingle();
   if (!review) return null;
