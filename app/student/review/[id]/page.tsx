@@ -91,12 +91,32 @@ export default function StudentReviewResult() {
             <div className="space-y-3">
               <h4 className="font-semibold text-[#8a8a8e] uppercase tracking-wider text-xs flex items-center gap-1.5"><MessageSquare className="w-3.5 h-3.5" /> Comments ({currentComments.length})</h4>
               <div className="space-y-2">
-                {review.comments.map((c: any, i: number) => c.task_number === activeTaskTab + 1 && (
-                  <div key={i} onClick={() => setFocusedCommentIndex(focusedCommentIndex === i ? null : i)} className={`p-4 rounded border text-sm cursor-pointer transition-all ${focusedCommentIndex === i ? 'bg-white text-black border-white' : 'bg-[#121214] border-[#1f1f23]'}`}>
-                    <div className={`text-xs italic mb-1.5 border-l-2 pl-2 ${focusedCommentIndex === i ? 'border-black text-black/70' : 'border-[#8a8a8e] text-[#8a8a8e]'}`}>&quot;{c.selected_text}&quot;</div>
-                    <div className="font-medium text-sm leading-relaxed">{c.comment_text}</div>
-                  </div>
-                ))}
+                {review.comments.map((c: any, i: number) => {
+                  if (c.task_number !== activeTaskTab + 1) return null;
+                  const isFocused = focusedCommentIndex === i;
+                  return (
+                    <div 
+                      key={i} 
+                      onClick={() => setFocusedCommentIndex(isFocused ? null : i)} 
+                      className={`p-4 rounded border text-sm cursor-pointer transition-all duration-200 ${
+                        isFocused 
+                          ? 'bg-blue-600 border-blue-500 shadow-[0_0_15px_rgba(37,99,235,0.25)] text-white' 
+                          : 'bg-[#121214] border-[#1f1f23] hover:border-zinc-700'
+                      }`}
+                    >
+                      <div className={`text-xs italic mb-1.5 border-l-2 pl-2 ${
+                        isFocused ? 'border-white text-blue-100' : 'border-[#8a8a8e] text-[#8a8a8e]'
+                      }`}>
+                        &quot;{c.selected_text}&quot;
+                      </div>
+                      <div className={`font-medium text-sm leading-relaxed ${
+                        isFocused ? 'text-white' : 'text-[#f5f5f7]'
+                      }`}>
+                        {c.comment_text}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
