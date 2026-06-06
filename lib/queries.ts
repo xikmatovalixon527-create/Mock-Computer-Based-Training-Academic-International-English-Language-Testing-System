@@ -1,217 +1,76 @@
-import sql from './db';
-
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-function isValidUuid(id: string | null | undefined): boolean {
-  if (!id) return false;
-  return UUID_REGEX.test(id);
-}
-
-// ─── Users ─────────────────────────────────────────────────────────────────────
+import { supabaseAdmin } from './supabase';
 
 export async function findUserByName(fullName: string) {
-  const rows = await sql`SELECT * FROM users WHERE full_name = ${fullName} LIMIT 1`;
-  return rows[0] || null;
+  const { data } = await supabaseAdmin.from('users').select('*').eq('full_name', fullName).maybeSingle();
+  return data;
 }
 
 export async function createUser(fullName: string, passwordHash: string, role: string, groupName?: string) {
-  const rows = await sql`
-    INSERT INTO users (full_name, password_hash, role, group_name)
-    VALUES (${fullName}, ${passwordHash}, ${role}, ${groupName || null})
-    RETURNING id, full_name, role, group_name
-  `;
-  return rows[0];
+  const { data, error } = await supabaseAdmin.from('users').insert([{ full_name: fullName, password_hash: passwordHash, role, group_name: groupName }]).select().single();
+  if (error) throw error;
+  return data;
 }
 
 export async function getAllStudents() {
-  return sql`
-    SELECT u.id, u.full_name, u.role, u.group_name, u.created_at,
-           COUNT(DISTINCT e.id)::int AS essay_count,
-           MAX(ld.last_active) AS last_active
-    FROM users u
-    LEFT JOIN essays e ON e.student_id = u.id
-    LEFT JOIN live_drafts ld ON ld.student_id = u.id
-    WHERE u.role = 'student'
-    GROUP BY u.id, u.group_name
-    ORDER BY u.created_at DESC
-  `;
+  const { data } = await supabaseAdmin.from('users').select('id, full_name, role, group_name, created_at, essays(id)').eq('role', 'student').order('created_at', { ascending: false });
+  return data?.map(u => ({
+    ...u,
+    essay_count: u.essays ? (u.essays as any[]).length : 0
+  })) || [];
 }
 
 export async function updateStudent(id: string, fullName: string, groupName: string) {
-  if (!isValidUuid(id)) return null;
-  const rows = await sql`
-    UPDATE users
-    SET full_name = ${fullName}, group_name = ${groupName}
-    WHERE id = ${id} AND role = 'student'
-    RETURNING id, full_name, group_name
-  `;
-  return rows[0];
+  const { data } = await supabaseAdmin.from('users').update({ full_name: fullName, group_name: groupName }).eq('id', id).eq('role', 'student').select().single();
+  return data;
 }
 
 export async function deleteStudent(id: string) {
-  if (!isValidUuid(id)) return;
-  await sql`DELETE FROM users WHERE id = ${id} AND role = 'student'`;
+  await supabaseAdmin.from('users').delete().eq('id', id).eq('role', 'student');
 }
 
-// ─── Essays ────────────────────────────────────────────────────────────────────
-
 export async function getEssays(studentId?: string) {
-  if (studentId) {
-    return sql`
-      SELECT e.*, u.full_name, u.group_name
-      FROM essays e
-      JOIN users u ON u.id = e.student_id
-      WHERE e.student_id = ${studentId}
-      ORDER BY e.created_at DESC
-    `;
-  }
-  return sql`
-    SELECT e.*, u.full_name, u.group_name
-    FROM essays e
-    JOIN users u ON u.id = e.student_id
-    ORDER BY e.created_at DESC
-  `;
+  let query = supabaseAdmin.from('essays').select('*, users!inner(full_name, group_name)').order('created_at', { ascending: false });
+  if (studentId) query = query.eq('student_id', studentId);
+  const { data } = await query;
+  return data?.map(e => ({ ...e, full_name: (e.users as any).full_name, group_name: (e.users as any).group_name })) || [];
 }
 
 export async function getEssayById(id: string) {
-  if (!isValidUuid(id)) return null;
-  const rows = await sql`
-    SELECT e.*, u.full_name
-    FROM essays e
-    JOIN users u ON u.id = e.student_id
-    WHERE e.id = ${id}
-    LIMIT 1
-  `;
-  return rows[0] || null;
+  const { data } = await supabaseAdmin.from('essays').select('*, users!inner(full_name)').eq('id', id).maybeSingle();
+  if (data) data.full_name = (data.users as any).full_name;
+  return data;
 }
 
-export async function createEssay(data: {
-  student_id: string;
-  task_type: string;
-  topic_text: string;
-  content_task1?: string;
-  content_task2?: string;
-}) {
-  const rows = await sql`
-    INSERT INTO essays (student_id, task_type, topic_text, content_task1, content_task2, status, submitted_at)
-    VALUES (${data.student_id}, ${data.task_type}, ${data.topic_text}, 
-            ${data.content_task1 || null}, ${data.content_task2 || null}, 
-            'pending', NOW())
-    RETURNING *
-  `;
-  return rows[0];
+export async function createEssay(data: { student_id: string; task_type: string; topic_text: string; content_task1?: string; content_task2?: string; }) {
+  const { data: result } = await supabaseAdmin.from('essays').insert([{
+    student_id: data.student_id, task_type: data.task_type, topic_text: data.topic_text,
+    content_task1: data.content_task1, content_task2: data.content_task2, status: 'pending', submitted_at: new Date().toISOString()
+  }]).select().single();
+  return result;
 }
 
 export async function deleteEssay(id: string) {
-  if (!isValidUuid(id)) return;
-  await sql`DELETE FROM essays WHERE id = ${id}`;
+  await supabaseAdmin.from('essays').delete().eq('id', id);
 }
 
-// ─── Reviews ───────────────────────────────────────────────────────────────────
-
 export async function getReviewByEssayId(essayId: string) {
-  if (!isValidUuid(essayId)) return null;
-
-  const reviews = await sql`
-    SELECT * FROM reviews 
-    WHERE essay_id = ${essayId} 
-    LIMIT 1
-  `;
-  if (reviews.length === 0) return null;
-  const review = reviews[0];
-
-  const comments = await sql`
-    SELECT id, review_id, task_number, start_index, end_index, selected_text, comment_text
-    FROM comments
-    WHERE review_id = ${review.id}
-  `;
-  
+  const { data: review } = await supabaseAdmin.from('reviews').select('*').eq('essay_id', essayId).maybeSingle();
+  if (!review) return null;
+  const { data: comments } = await supabaseAdmin.from('comments').select('*').eq('review_id', review.id);
   review.comments = comments || [];
   return review;
 }
 
-export async function saveReview(params: {
-  essay_id: string;
-  teacher_id: string;
-  ta_band: number | null; ta_feedback: string;
-  cc_band: number | null; cc_feedback: string;
-  lr_band: number | null; lr_feedback: string;
-  gra_band: number | null; gra_feedback: string;
-  overall_feedback: string;
-  overall_band: number | null;
-  comments: unknown[];
-}) {
-  const rows = await sql`
-    SELECT save_review_with_comments(
-      ${params.essay_id}::uuid,
-      ${params.teacher_id}::uuid,
-      ${params.ta_band}, ${params.ta_feedback},
-      ${params.cc_band}, ${params.cc_feedback},
-      ${params.lr_band}, ${params.lr_feedback},
-      ${params.gra_band}, ${params.gra_feedback},
-      ${params.overall_feedback}, ${params.overall_band},
-      ${JSON.stringify(params.comments)}::jsonb
-    ) AS review_id
-  `;
-  return rows[0];
-}
-
-export async function upsertLiveDraft(params: {
-  student_id: string;
-  task_type: string;
-  topic_text: string;
-  content_task1: string | null;
-  content_task2: string | null;
-  active_tab: number;
-}) {
-  const rows = await sql`
-    INSERT INTO live_drafts (
-      student_id, task_type, topic_text, content_task1, content_task2, active_tab, last_active, updated_at
-    ) VALUES (
-      ${params.student_id}::uuid,
-      ${params.task_type},
-      ${params.topic_text},
-      ${params.content_task1},
-      ${params.content_task2},
-      ${params.active_tab},
-      NOW(),
-      NOW()
-    )
-    ON CONFLICT (student_id) DO UPDATE SET
-      task_type = EXCLUDED.task_type,
-      topic_text = EXCLUDED.topic_text,
-      content_task1 = EXCLUDED.content_task1,
-      content_task2 = EXCLUDED.content_task2,
-      active_tab = EXCLUDED.active_tab,
-      last_active = NOW(),
-      updated_at = NOW()
-    RETURNING *
-  `;
-  return rows[0];
-}
-
-export async function deleteLiveDraft(studentId: string) {
-  if (!isValidUuid(studentId)) return;
-  await sql`DELETE FROM live_drafts WHERE student_id = ${studentId}::uuid`;
-}
-
-export async function getLiveDraftByStudentId(studentId: string) {
-  if (!isValidUuid(studentId)) return null;
-  const rows = await sql`
-    SELECT ld.*, u.full_name, u.group_name
-    FROM live_drafts ld
-    JOIN users u ON u.id = ld.student_id
-    WHERE ld.student_id = ${studentId}::uuid
-    LIMIT 1
-  `;
-  return rows[0] || null;
-}
-
-export async function getAllLiveDrafts() {
-  return sql`
-    SELECT ld.*, u.full_name, u.group_name
-    FROM live_drafts ld
-    JOIN users u ON u.id = ld.student_id
-    ORDER BY ld.updated_at DESC
-  `;
+export async function saveReview(params: any) {
+  const { data, error } = await supabaseAdmin.rpc('save_review_with_comments', {
+    p_essay_id: params.essay_id, p_teacher_id: params.teacher_id,
+    p_ta_band: params.ta_band, p_ta_feedback: params.ta_feedback,
+    p_cc_band: params.cc_band, p_cc_feedback: params.cc_feedback,
+    p_lr_band: params.lr_band, p_lr_feedback: params.lr_feedback,
+    p_gra_band: params.gra_band, p_gra_feedback: params.gra_feedback,
+    p_overall_feedback: params.overall_feedback, p_overall_band: params.overall_band,
+    p_comments: params.comments
+  });
+  if (error) throw error;
+  return data;
 }
