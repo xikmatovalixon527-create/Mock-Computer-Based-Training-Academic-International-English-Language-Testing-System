@@ -42,10 +42,10 @@ export function HighlightedText({ text, comments, taskIndex, focusedCommentIndex
       <span 
         key={`mark-${i}`} 
         onClick={() => setFocusedCommentIndex(isFocused ? null : c.originalIndex)}
-        className={`relative transition-all duration-150 cursor-pointer inline px-1.5 py-0.5 rounded ${
+        className={`relative transition-all duration-200 cursor-pointer inline px-1.5 py-0.5 rounded ${
           isFocused 
-            ? 'bg-[#0071e3] text-white font-medium border-b-2 border-solid border-white mx-0.5' 
-            : 'bg-[#374151]/30 text-[#f5f5f7] border-b border-dashed border-[#8a8a8e] hover:bg-[#374151]/50'
+            ? 'bg-blue-600 text-white font-medium border-b-2 border-solid border-white mx-0.5 shadow-[0_0_10px_rgba(37,99,235,0.6)]' 
+            : 'bg-sky-500/20 text-[#f5f5f7] border-b-2 border-sky-400/60 hover:bg-sky-500/35 hover:border-sky-400'
         }`}
       >
         {text.substring(c.start_index, c.end_index)}
