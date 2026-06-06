@@ -177,12 +177,45 @@ export default function TeacherReview() {
               )}
               {currentComments.length > 0 && (
                 <div className="mt-6 space-y-3">
-                   {comments.map((c, i) => c.task_number === activeTaskTab + 1 && (
-                     <div key={i} className="flex justify-between items-start p-4 rounded border text-xs bg-black border-[#1f1f23]">
-                       <div><div className="text-[#8a8a8e] italic text-xs mb-1">&quot;{c.selected_text}&quot;</div><div className="text-[#f5f5f7] font-semibold">{c.comment_text}</div></div>
-                       <button onClick={() => removeComment(i)} className="text-[#ff453a] hover:underline text-[10px] uppercase ml-4 cursor-pointer">Delete</button>
-                     </div>
-                   ))}
+                   {comments.map((c, i) => {
+                     if (c.task_number !== activeTaskTab + 1) return null;
+                     const isFocused = focusedCommentIndex === i;
+                     return (
+                       <div 
+                         key={i} 
+                         onClick={() => setFocusedCommentIndex(isFocused ? null : i)}
+                         className={`flex justify-between items-start p-4 rounded border text-xs cursor-pointer transition-all duration-200 ${
+                           isFocused 
+                             ? 'bg-blue-600 border-blue-500 shadow-[0_0_15px_rgba(37,99,235,0.25)] text-white' 
+                             : 'bg-black border-[#1f1f23] hover:border-zinc-700'
+                         }`}
+                       >
+                         <div className="flex-1 min-w-0">
+                           <div className={`text-xs italic mb-1 border-l-2 pl-2 ${
+                             isFocused ? 'border-white text-blue-100' : 'border-[#8a8a8e] text-[#8a8a8e]'
+                           }`}>
+                             &quot;{c.selected_text}&quot;
+                           </div>
+                           <div className={`font-semibold ${
+                             isFocused ? 'text-white' : 'text-[#f5f5f7]'
+                           }`}>
+                             {c.comment_text}
+                           </div>
+                         </div>
+                         <button 
+                           onClick={(e) => { 
+                             e.stopPropagation(); 
+                             removeComment(i); 
+                           }} 
+                           className={`text-[10px] uppercase font-bold tracking-wider ml-4 cursor-pointer transition-colors ${
+                             isFocused ? 'text-blue-200 hover:text-red-200' : 'text-[#ff453a] hover:text-red-400'
+                           }`}
+                         >
+                           Delete
+                         </button>
+                       </div>
+                     );
+                   })}
                 </div>
               )}
             </div>
