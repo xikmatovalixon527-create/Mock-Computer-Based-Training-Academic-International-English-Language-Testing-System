@@ -35,9 +35,6 @@ export function Navbar({ children }: { children?: React.ReactNode }) {
               <div className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center transition-all group-hover:border-blue-500/50 group-hover:bg-zinc-800">
                 <BookOpen className="w-5 h-5 text-blue-500 transition-transform group-hover:scale-110" />
               </div>
-              <span className="text-base font-bold tracking-widest uppercase">
-                <span className="text-blue-500">Mock Computer Based Training <br/> Academic International English Language Testing System</span>
-              </span>
             </Link>
 
             {user && (
