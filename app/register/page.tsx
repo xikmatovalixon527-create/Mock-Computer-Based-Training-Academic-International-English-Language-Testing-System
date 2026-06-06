@@ -21,7 +21,7 @@ export default function RegisterPage() {
     setLoading(true);
     setError('');
     if (role === 'student' && !groupName) {
-      setError('Please select your group');
+      setError('Please select your group assignment');
       setLoading(false);
       return;
     }
@@ -32,7 +32,7 @@ export default function RegisterPage() {
         body: JSON.stringify({ fullName, password, role, groupName: role === 'student' ? groupName : undefined }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to register');
+      if (!res.ok) throw new Error(data.error || 'Failed to register account');
       router.push(`/${role}/dashboard`);
       router.refresh();
     } catch (err: unknown) {
@@ -43,120 +43,107 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden flex items-center justify-center px-4 py-12">
-      {/* Decorative luxury backgrounds */}
-      <div className="luxury-bg-glow" />
-      <div className="luxury-grid-overlay" />
-      
-      {/* Precise watchmaker detail line */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1px] h-32 bg-gradient-to-b from-[var(--color-primary)]/40 to-transparent" />
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center px-4 py-12 bg-black text-white">
+      <div className="luxury-grid-overlay opacity-30" />
 
-      <div className="w-full max-w-[480px] z-10 animate-luxury-fade">
-        <div className="text-center mb-10 mt-12">
-          <div className="inline-flex relative w-12 h-12 rounded-full bg-[#101014] items-center justify-center border border-[var(--color-primary)]/40 shadow-xl mb-4 group">
-            <span className="absolute inset-0.5 rounded-full border border-dashed border-[var(--color-primary)]/10" />
-            <BookOpen className="w-5 h-5 text-[var(--color-primary)]" />
+      <div className="w-full max-w-[440px] z-10 space-y-8">
+        {/* Header */}
+        <div className="text-center space-y-3">
+          <div className="inline-flex w-12 h-12 rounded-full bg-zinc-900 items-center justify-center border border-zinc-800 shadow-xl mb-2">
+            <BookOpen className="w-5 h-5 text-blue-500" />
           </div>
-          <h1 className="text-h1 uppercase tracking-widest text-[#F5F5F7]">Begin Journey</h1>
-          <p className="text-xs uppercase tracking-[0.2em] text-[var(--color-text-tertiary)] mt-2">
-            Precision IELTS Evaluator & Practice Room
+          <h1 className="text-2xl font-bold uppercase tracking-widest text-white">Create Account</h1>
+          <p className="text-xs uppercase tracking-wider text-zinc-500">
+            Register as a Student or Teacher
           </p>
         </div>
 
-        <div className="smoked-glass border border-[var(--color-border)]/60 rounded-lg p-6 sm:p-8 shadow-2xl relative">
-          <div className="absolute top-0 right-10 w-20 h-[1px] bg-gradient-to-r from-transparent via-[var(--color-primary)]/30 to-transparent" />
-          
+        {/* Card */}
+        <div className="bg-zinc-900 border border-zinc-850 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6">
           {error && (
-            <div className="mb-5 flex items-start gap-3 p-4 rounded bg-[#E06C75]/10 border border-[#E06C75]/20 animate-shake">
-              <AlertCircle className="w-5 h-5 text-[#E06C75] shrink-0 mt-0.5" />
-              <span className="text-xs text-[#E06C75] font-semibold uppercase tracking-wider">{error}</span>
+            <div className="flex items-start gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20">
+              <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+              <span className="text-xs text-red-400 font-semibold uppercase tracking-wider">{error}</span>
             </div>
           )}
 
-          <form onSubmit={handleRegister} className="space-y-6">
-            <div className="space-y-3">
-              <label className="block text-xs uppercase tracking-widest font-bold text-[var(--color-text-secondary)]">Choose Command Persona</label>
-              <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={handleRegister} className="space-y-5">
+            {/* Role selection */}
+            <div className="space-y-2">
+              <label className="block text-xs uppercase tracking-wider font-bold text-zinc-400">Account Type</label>
+              <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => setRole('student')}
-                  className={`relative h-24 flex flex-col items-center justify-center gap-2 rounded transition-all cursor-pointer ${
+                  className={`py-4 flex flex-col items-center justify-center gap-2 rounded-xl border transition-all cursor-pointer ${
                     role === 'student'
-                      ? 'border border-[var(--color-primary)] bg-[var(--color-primary-soft)] shadow-[0_0_20px_rgba(197,168,128,0.15)]'
-                      : 'border border-[var(--color-border)] bg-[#0B0B0E] hover:border-[#2D2D37]'
+                      ? 'border-blue-500 bg-blue-500/5 shadow-md shadow-blue-500/5'
+                      : 'border-zinc-800 bg-black hover:border-zinc-700'
                   }`}
                 >
-                  <Users className={`w-5 h-5 transition-transform ${role === 'student' ? 'text-[var(--color-primary)] scale-110' : 'text-[var(--color-text-tertiary)]'}`} />
-                  <span className={`text-xs uppercase tracking-[0.15em] font-semibold ${role === 'student' ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-secondary)]'}`}>
+                  <Users className={`w-4 h-4 ${role === 'student' ? 'text-blue-500' : 'text-zinc-500'}`} />
+                  <span className={`text-[10px] uppercase tracking-wider font-bold ${role === 'student' ? 'text-white' : 'text-zinc-400'}`}>
                     Student
                   </span>
-                  
-                  {role === 'student' && (
-                    <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-[var(--color-primary)] flex items-center justify-center shadow-[0_0_8px_var(--color-primary)]" />
-                  )}
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setRole('teacher')}
-                  className={`relative h-24 flex flex-col items-center justify-center gap-2 rounded transition-all cursor-pointer ${
+                  className={`py-4 flex flex-col items-center justify-center gap-2 rounded-xl border transition-all cursor-pointer ${
                     role === 'teacher'
-                      ? 'border border-[var(--color-accent)] bg-[var(--color-accent-soft)] shadow-[0_0_20px_rgba(142,154,175,0.15)]'
-                      : 'border border-[var(--color-border)] bg-[#0B0B0E] hover:border-[#2D2D37]'
+                      ? 'border-blue-500 bg-blue-500/5 shadow-md shadow-blue-500/5'
+                      : 'border-zinc-800 bg-black hover:border-zinc-700'
                   }`}
                 >
-                  <GraduationCap className={`w-5 h-5 transition-transform ${role === 'teacher' ? 'text-[var(--color-accent)] scale-110' : 'text-[var(--color-text-tertiary)]'}`} />
-                  <span className={`text-xs uppercase tracking-[0.15em] font-semibold ${role === 'teacher' ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-secondary)]'}`}>
-                    Examiner
+                  <GraduationCap className={`w-4 h-4 ${role === 'teacher' ? 'text-blue-500' : 'text-zinc-500'}`} />
+                  <span className={`text-[10px] uppercase tracking-wider font-bold ${role === 'teacher' ? 'text-white' : 'text-zinc-400'}`}>
+                    Teacher
                   </span>
-                  
-                  {role === 'teacher' && (
-                    <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-[var(--color-accent)] flex items-center justify-center shadow-[0_0_8px_var(--color-accent)]" />
-                  )}
                 </button>
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="block text-xs uppercase tracking-widest font-semibold text-[var(--color-text-secondary)]">Full Name</label>
+              <label className="block text-xs uppercase tracking-wider font-bold text-zinc-400">Full Name</label>
               <input
                 type="text"
                 required
                 value={fullName}
                 onChange={e => setFullName(e.target.value)}
-                className="w-full h-11 px-4 bg-[#0B0B0E] border border-[var(--color-border)] rounded text-xs tracking-wider text-[#F5F5F7] placeholder:text-[var(--color-text-tertiary)] focus:outline-none focus:border-[var(--color-primary)] transition-all"
-                placeholder="Candidate Full Name"
+                className="w-full h-11 px-4 bg-black border border-zinc-800 rounded-xl text-xs tracking-wider text-white placeholder:text-zinc-700 focus:outline-none focus:border-blue-500 transition-all font-medium"
+                placeholder="Enter your full name"
                 autoComplete="name"
               />
             </div>
 
             {role === 'student' && (
-              <div className="space-y-2 animate-luxury-fade">
-                <label className="block text-xs uppercase tracking-widest font-semibold text-[var(--color-text-secondary)]">Select Student Group</label>
+              <div className="space-y-2">
+                <label className="block text-xs uppercase tracking-wider font-bold text-zinc-400">Class Group Assignment</label>
                 <select
                   required
                   value={groupName}
                   onChange={e => setGroupName(e.target.value)}
-                  className="w-full h-11 px-4 bg-[#0B0B0E] border border-[var(--color-border)] rounded text-xs tracking-wider text-[#F5F5F7] focus:outline-none focus:border-[var(--color-primary)] transition-all cursor-pointer"
+                  className="w-full h-11 px-4 bg-black border border-zinc-800 rounded-xl text-xs tracking-wider text-white focus:outline-none focus:border-blue-500 transition-all font-medium cursor-pointer"
                 >
-                  <option value="" disabled>-- Select Your Group --</option>
+                  <option value="" disabled className="text-zinc-700">-- Select Your Group --</option>
                   {STUDENT_GROUPS.map(g => (
-                    <option key={g} value={g}>{g}</option>
+                    <option key={g} value={g} className="text-white bg-zinc-900">{g}</option>
                   ))}
                 </select>
               </div>
             )}
 
             <div className="space-y-2">
-              <label className="block text-xs uppercase tracking-widest font-semibold text-[var(--color-text-secondary)]">Access Key (Password)</label>
+              <label className="block text-xs uppercase tracking-wider font-bold text-zinc-400">Security Password</label>
               <input
                 type="password"
                 required
                 minLength={6}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                className="w-full h-11 px-4 bg-[#0B0B0E] border border-[var(--color-border)] rounded text-xs tracking-wider text-[#F5F5F7] placeholder:text-[var(--color-text-tertiary)] focus:outline-none focus:border-[var(--color-primary)] transition-all"
-                placeholder="At least 6 characters"
+                className="w-full h-11 px-4 bg-black border border-zinc-800 rounded-xl text-xs tracking-wider text-white placeholder:text-zinc-700 focus:outline-none focus:border-blue-500 transition-all font-medium"
+                placeholder="Minimum 6 characters"
                 autoComplete="new-password"
               />
             </div>
@@ -164,19 +151,18 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-11 relative overflow-hidden flex items-center justify-center gap-2 bg-gradient-to-r from-[var(--color-primary)] to-[#D4AF37] hover:brightness-110 text-black font-semibold text-xs uppercase tracking-widest rounded shadow-xl cursor-pointer active:scale-[0.99] transition-all disabled:opacity-40 disabled:pointer-events-none"
+              className="w-full h-11 flex items-center justify-center gap-2 bg-white hover:bg-zinc-200 text-black font-bold text-xs uppercase tracking-wider rounded-full shadow-lg cursor-pointer transition-all disabled:opacity-40 disabled:pointer-events-none active:scale-95"
             >
-              <span className="absolute left-0 top-0 h-full w-[1px] bg-white/20" />
-              <span className="relative z-10">{loading ? 'Engaging Vault...' : 'Confirm Registration'}</span>
-              {!loading && <ArrowRight className="w-3.5 h-3.5 relative z-10 text-black" />}
+              <span>{loading ? 'Processing...' : 'Register'}</span>
+              {!loading && <ArrowRight className="w-4 h-4 text-black" />}
             </button>
           </form>
         </div>
 
-        <p className="mt-6 text-center text-xs uppercase tracking-[0.25em] text-[var(--color-text-secondary)]">
-          Already verified?{' '}
-          <Link href="/login" className="font-semibold text-[var(--color-primary)] hover:underline hover:brightness-110">
-            Vault Entry
+        <p className="text-center text-xs uppercase tracking-wider text-zinc-500">
+          Already registered?{' '}
+          <Link href="/login" className="font-bold text-blue-500 hover:underline">
+            Sign In
           </Link>
         </p>
       </div>

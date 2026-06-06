@@ -46,160 +46,142 @@ export default function StudentDashboard() {
 
   return (
     <Navbar>
-      <div className="space-y-8 animate-luxury-fade">
-        {/* Welcome Hero Panel */}
-        <div className="relative overflow-hidden p-6 sm:p-10 smoked-glass border border-[var(--color-border)]/60 rounded-lg shadow-2xl">
-          {/* Subtle Golden Timing Ring Background Graphic (Static for performance & quiet premium feel) */}
-          <div className="absolute right-[-100px] top-[-100px] w-[350px] h-[350px] rounded-full border border-[var(--color-primary)]/[0.04] pointer-events-none">
-            <span className="absolute inset-4 rounded-full border border-dashed border-[var(--color-primary)]/[0.04]" />
-            <span className="absolute inset-16 rounded-full border border-solid border-[var(--color-primary)]/[0.02]" />
-            <span className="absolute inset-28 rounded-full border border-solid border-[var(--color-primary)]/[0.01]" />
-          </div>
-          <div className="absolute top-0 left-20 w-32 h-[1px] bg-gradient-to-r from-transparent via-[var(--color-primary)]/20 to-transparent" />
-
+      <div className="space-y-10">
+        {/* Welcome Section */}
+        <div className="p-8 sm:p-10 bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 rounded-2xl shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 relative z-10">
-            <div>
-              <span className="text-[10px] sm:text-xs uppercase tracking-[0.25em] text-[var(--color-primary)] font-bold mb-2 block">
-                Standard Flight Deck
+            <div className="space-y-2.5">
+              <span className="text-xs font-bold uppercase tracking-widest text-blue-500 block">
+                Academic Practice Hub
               </span>
-              <h1 className="text-display text-[#F5F5F7]">
-                Welcome, <span className="text-[#FFFFFF] italic">{user?.fullName || 'Candidate'}</span>
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+                Welcome, {user?.fullName || 'Student'}
               </h1>
-              <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] mt-3 max-w-xl leading-relaxed">
-                Unlock higher test performance bands with clinical, metrics-driven diagnostic feedbacks. Choose an active practice layout below.
+              <p className="text-base text-zinc-400 max-w-xl leading-relaxed">
+                Hone your IELTS writing skills. Submit custom or standard test prompts to receive direct paragraph annotations and scored reviews.
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 shrink-0">
               <button
                 onClick={() => router.push('/student/test/setup')}
-                className="touch-target px-7 py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-black font-bold text-[10px] uppercase tracking-[0.2em] rounded border border-[var(--color-primary)] active:scale-[0.98] transition-all flex items-center justify-center gap-2.5 shadow-lg shadow-black/40 cursor-pointer"
+                className="px-6 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs uppercase tracking-wider rounded-full transition-all flex items-center justify-center gap-2.5 cursor-pointer shadow-lg shadow-blue-600/10 active:scale-95"
               >
-                <BookOpen className="w-4 h-4 text-black stroke-[2.5]" />
-                Original Exam
+                <BookOpen className="w-4.5 h-4.5" />
+                Standard Exam
               </button>
               <button
                 onClick={() => router.push('/student/test/setup-customizable')}
-                className="touch-target px-7 py-3 bg-[#0B0B0E] hover:bg-[#101014] text-[#F5F5F7] hover:text-[#FFFFFF] font-bold text-[10px] uppercase tracking-[0.2em] rounded border border-[var(--color-border-strong)] hover:border-[var(--color-primary)]/40 active:scale-[0.98] transition-all flex items-center justify-center gap-2.5 shadow-lg shadow-black/40 cursor-pointer"
+                className="px-6 py-3.5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-xs uppercase tracking-wider rounded-full border border-zinc-800 hover:border-zinc-700 transition-all flex items-center justify-center gap-2.5 cursor-pointer active:scale-95"
               >
-                <Settings2 className="w-4 h-4 text-[#F5F5F7]/85" />
-                Interactive Custom
+                <Settings2 className="w-4.5 h-4.5" />
+                Custom Practice
               </button>
             </div>
           </div>
         </div>
 
-        {/* Tactical Metric Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 stagger-luxury">
-          {/* Card Completed */}
-          <div className="relative p-6 sm:p-7 bg-gradient-to-br from-[#0B0B0E] to-[#111114] border border-[var(--color-border)]/60 rounded-lg shadow-xl luxury-card-hover">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="p-6 bg-zinc-900/40 border border-zinc-800/80 rounded-2xl flex flex-col justify-between">
             <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-tertiary)] animate-pulse">Completed Vaults</span>
-              <div className="w-9 h-9 rounded-full bg-[var(--color-primary-soft)] flex items-center justify-center border border-[var(--color-primary)]/15">
-                <FileText className="w-5 h-5 text-[var(--color-primary)]" />
-              </div>
+              <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Submitted Tasks</span>
+              <FileText className="w-5 h-5 text-zinc-400" />
             </div>
-            <div className="flex items-baseline gap-2.5">
-              <span className="text-4xl font-mono font-extrabold text-[#FFFFFF]">{essays.length}</span>
-              <span className="text-xs text-[var(--color-text-tertiary)] uppercase tracking-wider font-semibold">Submissions</span>
+            <div className="flex items-baseline gap-2">
+              <span className="text-4xl font-extrabold text-white font-mono">{essays.length}</span>
+              <span className="text-xs text-zinc-500 font-semibold uppercase">Total Essays</span>
             </div>
           </div>
 
-          {/* Card Pending */}
-          <div className="relative p-6 sm:p-7 bg-gradient-to-br from-[#0B0B0E] to-[#111114] border border-[var(--color-border)]/60 rounded-lg shadow-xl luxury-card-hover">
+          <div className="p-6 bg-zinc-900/40 border border-zinc-800/80 rounded-2xl flex flex-col justify-between">
             <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">Awaiting Appraisal</span>
-              <div className="w-9 h-9 rounded-full bg-[var(--color-warning-soft)] flex items-center justify-center border border-[var(--color-warning)]/15">
-                <Clock className="w-5 h-5 text-[var(--color-warning)]" />
-              </div>
+              <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Awaiting Marking</span>
+              <Clock className="w-5 h-5 text-zinc-400" />
             </div>
-            <div className="flex items-baseline gap-2.5">
-              <span className="text-4xl font-mono font-extrabold text-[#FFFFFF]">{pending.length}</span>
-              <span className="text-xs text-[var(--color-text-tertiary)] uppercase tracking-wider font-semibold">Pending</span>
+            <div className="flex items-baseline gap-2">
+              <span className="text-4xl font-extrabold text-amber-500 font-mono">{pending.length}</span>
+              <span className="text-xs text-zinc-500 font-semibold uppercase">Pending Evaluation</span>
             </div>
           </div>
 
-          {/* Card Avg Band */}
-          <div className="relative p-6 sm:p-7 bg-gradient-to-br from-[#0B0B0E] to-[#111114] border border-[var(--color-border)]/60 rounded-lg shadow-xl luxury-card-hover">
+          <div className="p-6 bg-zinc-900/40 border border-zinc-800/80 rounded-2xl flex flex-col justify-between">
             <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">Historical Precision</span>
-              <div className="w-9 h-9 rounded-full bg-[var(--color-success-soft)] flex items-center justify-center border border-[var(--color-success)]/15">
-                <Award className="w-5 h-5 text-[var(--color-success)]" />
-              </div>
+              <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Mean Score</span>
+              <Award className="w-5 h-5 text-zinc-400" />
             </div>
-            <div className="flex items-baseline gap-2.5">
-              <span className={`text-6xl sm:text-7xl tracking-wide font-sans font-black ${getBandTextColor(avgBand)}`}>{avgBand || '—'}</span>
-              <span className="text-xs text-[var(--color-text-tertiary)] uppercase tracking-wider font-semibold">Avg Band Score</span>
+            <div className="flex items-baseline gap-2">
+              <span className={`text-5xl font-black tracking-tight ${getBandTextColor(avgBand)}`}>{avgBand || '—'}</span>
+              <span className="text-xs text-zinc-500 font-semibold uppercase">Avg Band</span>
             </div>
           </div>
         </div>
 
-        {/* History Block */}
-        <div className="space-y-4">
+        {/* Essay List */}
+        <div className="space-y-5">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-sm uppercase tracking-[0.2em] font-bold text-[var(--color-text-secondary)]">Appraisal Ledger</h2>
-              <p className="text-xs text-[var(--color-text-tertiary)] uppercase mt-0.5 tracking-wider font-semibold">Chronological test entries & expert annotations</p>
+              <h2 className="text-base font-bold uppercase tracking-wider text-neutral-300">Practice Log</h2>
+              <p className="text-xs text-zinc-500 mt-0.5">Chronological overview of submitted writings and evaluations</p>
             </div>
             {essays.length > 0 && (
               <button 
                 onClick={fetchData} 
-                className="touch-target p-2 px-3.5 rounded-lg hover:bg-[var(--color-surface-hover)] border border-[var(--color-border)]/60 hover:border-[var(--color-border-strong)] text-xs font-bold uppercase tracking-widest text-[#FFFFFF] transition-all cursor-pointer flex items-center gap-2"
-                title="Refresh ledger"
+                className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-full text-xs font-bold uppercase tracking-wider text-white transition-all cursor-pointer flex items-center gap-1.5"
               >
-                <RefreshCw className="w-4 h-4" />
-                <span>Refresh Logs</span>
+                <RefreshCw className="w-3.5 h-3.5" />
+                Refresh
               </button>
             )}
           </div>
 
-          <div className="smoked-glass border border-[var(--color-border)]/60 rounded-lg overflow-hidden shadow-2xl">
+          <div className="bg-zinc-900/30 border border-zinc-850 rounded-2xl overflow-hidden shadow-2xl">
             {isLoading ? (
-              <div className="p-16 text-center">
-                <RefreshCw className="w-6 h-6 animate-spin mx-auto text-[var(--color-primary)] mb-4" />
-                <p className="text-xs uppercase tracking-widest text-[var(--color-text-tertiary)] font-bold">Synchronizing record ledger...</p>
+              <div className="p-20 text-center">
+                <RefreshCw className="w-8 h-8 animate-spin mx-auto text-blue-500 mb-4" />
+                <p className="text-xs uppercase tracking-wider text-zinc-500">Retrieving test submissions...</p>
               </div>
             ) : essays.length === 0 ? (
-              <div className="p-16 text-center">
-                <FileText className="w-12 h-12 mx-auto text-[var(--color-text-tertiary)] mb-4 opacity-40" />
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-[#F5F5F7] mb-1">No chronological entries</h3>
-                <p className="text-xs text-[var(--color-text-secondary)] font-medium">Deploy your initial practice exam to initiate scores logging.</p>
+              <div className="p-20 text-center">
+                <FileText className="w-12 h-12 mx-auto text-zinc-700 mb-4" />
+                <h3 className="text-base font-semibold uppercase tracking-wider text-white mb-1.5">No submissions logged</h3>
+                <p className="text-xs text-zinc-400">Launch a task module using standard or custom configurations above to start.</p>
               </div>
             ) : (
-              <div className="divide-y divide-[var(--color-border)]/40">
+              <div className="divide-y divide-zinc-900">
                 {essays.map(essay => (
-                  <div key={essay.id} className="p-5 sm:p-6 hover:bg-[#111114]/40 transition-colors duration-300">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-3.5 mb-2.5">
-                          <span className="px-3 py-1 text-[11px] font-extrabold uppercase tracking-widest border border-[var(--color-primary)]/40 bg-[var(--color-primary-soft)] text-[var(--color-primary)] rounded">
-                            {essay.task_type === 'task1' ? 'Academic Task 1' : essay.task_type === 'task2' ? 'Academic Task 2' : 'Composite Session'}
+                  <div key={essay.id} className="p-6 hover:bg-zinc-900/20 transition-colors">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                      <div className="flex-1 min-w-0 space-y-2">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider border border-blue-500/20 bg-blue-500/10 text-blue-400 rounded-full">
+                            {essay.task_type === 'task1' ? 'Task 1 (Report)' : essay.task_type === 'task2' ? 'Task 2 (Essay)' : 'Composite Session'}
                           </span>
-                          <span className="text-xs font-mono text-[var(--color-text-tertiary)] font-semibold">
+                          <span className="text-xs text-zinc-500 font-medium">
                             {format(new Date(essay.created_at), 'MMMM dd, yyyy · hh:mm a')}
                           </span>
                         </div>
-                        <p className="text-sm font-serif italic text-neutral-300 line-clamp-2 pr-6 leading-relaxed">
+                        <p className="text-base italic text-zinc-300 leading-relaxed line-clamp-2">
                           &ldquo;{getTopicText(essay.topic_text)}&rdquo;
                         </p>
                       </div>
-                      <div className="flex flex-wrap items-center gap-4 shrink-0 justify-between sm:justify-end">
+                      <div className="flex flex-wrap items-center gap-4 shrink-0 justify-between md:justify-end">
                         {essay.status === 'reviewed' ? (
                           <>
-                            <span className={`text-lg font-sans font-black tracking-wide uppercase flex items-center gap-2.5 px-4.5 py-2.5 rounded-lg border shadow-md ${getBandBadgeStyle(essay.overall_band)}`}>
-                              <span className={`w-2 h-2 rounded-full ${essay.overall_band != null && Number(essay.overall_band) >= 9.0 ? 'bg-gradient-to-r from-red-500 to-purple-500 animate-pulse' : 'bg-current'}`} />
-                              {essay.overall_band != null && Number(essay.overall_band) > 0 ? `Band ${Number(essay.overall_band).toFixed(1)}` : 'FEEDBACK ONLY'}
+                            <span className={`text-xs font-extrabold tracking-wider uppercase px-4 py-2 rounded-full border ${getBandBadgeStyle(essay.overall_band)}`}>
+                              {essay.overall_band != null && Number(essay.overall_band) > 0 ? `Band ${Number(essay.overall_band).toFixed(1)}` : 'Feedback only'}
                             </span>
                             <Link
                               href={`/student/review/${essay.id}`}
-                              className="touch-target px-5 py-2.5 text-xs uppercase font-extrabold tracking-[0.18em] text-black bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] rounded border border-[var(--color-primary)] shadow-md transition-all flex items-center gap-1.5 cursor-pointer hover:translate-x-0.5 duration-200"
+                              className="px-5 py-2.5 text-xs uppercase font-bold text-black bg-white hover:bg-zinc-200 rounded-full transition-all flex items-center gap-1.5 cursor-pointer shadow-md"
                             >
-                              Analytical Review <ArrowRight className="w-4 h-4 text-black stroke-[3]" />
+                              Review Evaluation <ArrowRight className="w-4 h-4" />
                             </Link>
                           </>
                         ) : (
-                          <span className="inline-flex items-center gap-2 px-3 py-2 rounded text-xs uppercase tracking-widest font-extrabold bg-[var(--color-warning-soft)] text-[var(--color-warning)] border border-[var(--color-warning)]/15">
-                            <span className="w-2 h-2 rounded-full bg-[var(--color-warning)] animate-pulse" />
-                            Diagnostic appraisal pending
+                          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs uppercase tracking-wider font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                            Awaiting Marking
                           </span>
                         )}
                       </div>

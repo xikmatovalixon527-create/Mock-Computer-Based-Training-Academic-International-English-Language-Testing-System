@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { LogOut, BookOpen, UserCircle } from 'lucide-react';
+import { LogOut, BookOpen, User } from 'lucide-react';
 
 export function Navbar({ children }: { children?: React.ReactNode }) {
   const router = useRouter();
@@ -24,44 +24,38 @@ export function Navbar({ children }: { children?: React.ReactNode }) {
   const isTeacher = user?.role === 'teacher';
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="sticky top-0 z-50 w-full smoked-glass border-b border-[var(--color-border)]/50 safe-top">
+    <div className="min-h-screen flex flex-col bg-zinc-950 text-white selection:bg-blue-600/30">
+      <header className="sticky top-0 z-50 w-full bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-900/80 safe-top">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
+          <div className="flex justify-between h-20 items-center">
             <Link
               href={isTeacher ? '/teacher/dashboard' : '/student/dashboard'}
-              className="flex items-center gap-3 group"
+              className="flex items-center gap-3.5 group"
             >
-              <div className="relative w-9 h-9 rounded-full bg-gradient-to-br from-[#0B0B0E] to-[#16161C] flex items-center justify-center border border-[var(--color-primary)]/40 shadow-xl transition-all group-hover:border-[var(--color-primary)]">
-                {/* Thin gold watch accent lines */}
-                <span className="absolute inset-0.5 rounded-full border border-dashed border-[var(--color-primary)]/10 animate-[spin_120s_linear_infinite]" />
-                <BookOpen className="w-4 h-4 text-[var(--color-primary)] relative z-10 transition-transform group-hover:scale-110" />
+              <div className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center transition-all group-hover:border-blue-500/50 group-hover:bg-zinc-800">
+                <BookOpen className="w-5 h-5 text-blue-500 transition-transform group-hover:scale-110" />
               </div>
-              <span className="font-serif text-lg tracking-widest text-[#F5F5F7] uppercase flex items-center gap-1.5">
-                IELTS <span className="text-[var(--color-primary)] font-semibold text-xs tracking-[0.2em] uppercase px-1.5 py-0.5 rounded border border-[var(--color-primary)]/30 bg-[var(--color-primary-soft)]">CBT</span>
+              <span className="text-base font-bold tracking-widest uppercase">
+                IELTS <span className="text-blue-500">CBT</span>
               </span>
             </Link>
 
             {user && (
-              <div className="flex items-center gap-1.5 sm:gap-4">
-                <div className="flex items-center gap-2 px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-[#101014] border border-[var(--color-border)]/80 self-center">
-                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[var(--color-primary)] animate-pulse" />
-                  <span className="text-[10px] sm:text-xs font-bold tracking-wider uppercase text-[#F5F5F7] max-w-[70px] sm:max-w-[120px] truncate">{user.fullName}</span>
-                  <span className={`px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-extrabold uppercase tracking-widest border ${
-                    isTeacher 
-                      ? 'border-[var(--color-accent)]/30 bg-[var(--color-accent-soft)] text-[var(--color-accent)]' 
-                      : 'border-[var(--color-primary)]/30 bg-[var(--color-primary-soft)] text-[var(--color-primary)]'
-                  }`}>
-                    {isTeacher ? 'Examiner' : 'Student'}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-zinc-900/60 border border-zinc-800">
+                  <User className="w-4 h-4 text-blue-500 shrink-0" />
+                  <span className="text-sm font-semibold text-white max-w-[150px] truncate">{user.fullName}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 bg-zinc-800 px-2.5 py-0.5 rounded-full">
+                    {isTeacher ? 'Teacher' : 'Student'}
                   </span>
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="touch-target px-2 py-2 sm:px-3.5 sm:py-2 rounded-lg text-[var(--color-text-secondary)] hover:text-[#E06C75] hover:bg-[#E06C75]/10 border border-transparent hover:border-[#E06C75]/10 transition-all font-medium flex items-center shrink-0"
+                  className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold text-zinc-400 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all cursor-pointer"
                   aria-label="Sign out"
                 >
-                  <LogOut className="w-4 h-4 text-neutral-400 hover:text-[#E06C75]" />
-                  <span className="hidden sm:inline ml-2 text-xs uppercase tracking-widest font-semibold">Sign Out</span>
+                  <LogOut className="w-4 h-4" />
+                  <span className="hidden md:inline">Sign Out</span>
                 </button>
               </div>
             )}
@@ -69,7 +63,7 @@ export function Navbar({ children }: { children?: React.ReactNode }) {
         </div>
       </header>
 
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {children}
       </main>
     </div>

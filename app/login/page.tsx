@@ -22,76 +22,68 @@ export default function LoginPage() {
         body: JSON.stringify({ fullName, password }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to login');
+      if (!res.ok) throw new Error(data.error || 'Failed to sign in');
       router.push(`/${data.user.role}/dashboard`);
       router.refresh();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      setError(err instanceof Error ? err.message : 'Sign in failed');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden flex items-center justify-center px-4 py-12">
-      {/* Cinematic Backgrounds */}
-      <div className="luxury-bg-glow" />
-      <div className="luxury-grid-overlay" />
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center px-4 py-12 bg-black text-white">
+      <div className="luxury-grid-overlay opacity-30" />
       
-      {/* Precise watchmaker detail line */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1px] h-32 bg-gradient-to-b from-[var(--color-primary)]/40 to-transparent" />
-
-      <div className="w-full max-w-[420px] z-10 animate-luxury-fade">
+      <div className="w-full max-w-[400px] z-10 space-y-8">
         {/* Header */}
-        <div className="text-center mb-10">
-          <div className="inline-flex relative w-12 h-12 rounded-full bg-[#101014] items-center justify-center border border-[var(--color-primary)]/40 shadow-xl mb-4 group">
-            <span className="absolute inset-0.5 rounded-full border border-dashed border-[var(--color-primary)]/10" />
-            <BookOpen className="w-5 h-5 text-[var(--color-primary)]" />
+        <div className="text-center space-y-3">
+          <div className="inline-flex w-12 h-12 rounded-full bg-zinc-900 items-center justify-center border border-zinc-800 shadow-xl mb-2">
+            <BookOpen className="w-5 h-5 text-blue-500" />
           </div>
-          <h1 className="text-h1 uppercase tracking-widest text-[#F5F5F7]">Vault Access</h1>
-          <p className="text-xs uppercase tracking-[0.2em] text-[var(--color-text-tertiary)] mt-2">
-            Secure Platform Authorization
+          <h1 className="text-2xl font-bold uppercase tracking-widest text-white">Sign In</h1>
+          <p className="text-xs uppercase tracking-wider text-zinc-500">
+            IELTS CBT Practice Platform
           </p>
         </div>
 
         {/* Card */}
-        <div className="smoked-glass border border-[var(--color-border)]/60 rounded-lg p-6 sm:p-8 shadow-2xl relative">
-          <div className="absolute top-0 left-10 w-20 h-[1px] bg-gradient-to-r from-transparent via-[var(--color-primary)]/30 to-transparent" />
-
+        <div className="bg-zinc-900 border border-zinc-850 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6">
           {error && (
-            <div className="mb-5 flex items-start gap-3 p-4 rounded bg-[#E06C75]/10 border border-[#E06C75]/20 animate-shake">
-              <AlertCircle className="w-5 h-5 text-[#E06C75] shrink-0 mt-0.5" />
-              <span className="text-xs text-[#E06C75] font-semibold uppercase tracking-wider">{error}</span>
+            <div className="flex items-start gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20">
+              <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+              <span className="text-xs text-red-400 font-semibold uppercase tracking-wider">{error}</span>
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-2">
-              <label className="block text-xs uppercase tracking-widest font-semibold text-[var(--color-text-secondary)]">
-                Authorized Name
+              <label className="block text-xs uppercase tracking-wider font-bold text-zinc-400">
+                Full Name
               </label>
               <input
                 type="text"
                 required
                 value={fullName}
                 onChange={e => setFullName(e.target.value)}
-                className="w-full h-11 px-4 bg-[#0B0B0E] border border-[var(--color-border)] rounded text-xs tracking-wider text-[#F5F5F7] placeholder:text-[var(--color-text-tertiary)] focus:outline-none focus:border-[var(--color-primary)] transition-all"
-                placeholder="Full Registered Name"
+                className="w-full h-11 px-4 bg-black border border-zinc-800 rounded-xl text-xs tracking-wider text-white placeholder:text-zinc-700 focus:outline-none focus:border-blue-500 transition-all font-medium"
+                placeholder="Enter your registered name"
                 autoComplete="name"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="block text-xs uppercase tracking-widest font-semibold text-[var(--color-text-secondary)]">
-                Access Passphrase
+              <label className="block text-xs uppercase tracking-wider font-bold text-zinc-400">
+                Password
               </label>
               <input
                 type="password"
                 required
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                className="w-full h-11 px-4 bg-[#0B0B0E] border border-[var(--color-border)] rounded text-xs tracking-wider text-[#F5F5F7] placeholder:text-[var(--color-text-tertiary)] focus:outline-none focus:border-[var(--color-primary)] transition-all"
-                placeholder="Secure Access Code"
+                className="w-full h-11 px-4 bg-black border border-zinc-800 rounded-xl text-xs tracking-wider text-white placeholder:text-zinc-700 focus:outline-none focus:border-blue-500 transition-all font-medium"
+                placeholder="Enter your security password"
                 autoComplete="current-password"
               />
             </div>
@@ -99,18 +91,17 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-11 relative overflow-hidden flex items-center justify-center gap-2 bg-gradient-to-r from-[var(--color-primary)] to-[#D4AF37] hover:brightness-110 text-black font-semibold text-xs uppercase tracking-widest rounded shadow-xl cursor-pointer active:scale-[0.99] transition-all disabled:opacity-40 disabled:pointer-events-none"
+              className="w-full h-11 flex items-center justify-center gap-2 bg-white hover:bg-zinc-200 text-black font-bold text-xs uppercase tracking-wider rounded-full shadow-lg cursor-pointer transition-all disabled:opacity-40 disabled:pointer-events-none active:scale-95"
             >
-              <span className="absolute left-0 top-0 h-full w-[1px] bg-white/20" />
-              <span className="relative z-10">{loading ? 'Decrypting...' : 'Enter Console'}</span>
-              {!loading && <ArrowRight className="w-3.5 h-3.5 relative z-10 text-black" />}
+              <span>{loading ? 'Signing In...' : 'Sign In'}</span>
+              {!loading && <ArrowRight className="w-4 h-4 text-black" />}
             </button>
           </form>
         </div>
 
-        <p className="mt-6 text-center text-xs uppercase tracking-[0.25em] text-[var(--color-text-secondary)]">
-          Need verification?{' '}
-          <Link href="/register" className="font-semibold text-[var(--color-primary)] hover:underline hover:brightness-110">
+        <p className="text-center text-xs uppercase tracking-wider text-zinc-500">
+          New to the platform?{' '}
+          <Link href="/register" className="font-bold text-blue-500 hover:underline">
             Register Account
           </Link>
         </p>

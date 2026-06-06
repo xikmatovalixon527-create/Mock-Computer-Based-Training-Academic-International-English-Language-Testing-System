@@ -18,6 +18,7 @@ export interface Essay {
   created_at: string;
   submitted_at: string | null;
   full_name?: string; // Student name (joined from users table)
+  group_name?: string | null; // Student class group (joined from users table)
 }
 
 export interface Review {
