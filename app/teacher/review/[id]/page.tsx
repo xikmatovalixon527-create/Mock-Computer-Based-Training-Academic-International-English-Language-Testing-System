@@ -22,7 +22,8 @@ export default function TeacherReview() {
   const [task2Feedbacks, setTask2Feedbacks] = useState({ ta: '', cc: '', lr: '', gra: '' });
   const [overallFeedback, setOverallFeedback] = useState('');
   
-  const textRef = useRef<HTMLDivElement>(null);
+  // Используем один реф для контейнера, в котором непосредственно происходит выделение текста
+  const textContainerRef = useRef<HTMLDivElement>(null);
   const [comments, setComments] = useState<any[]>([]);
   const [pendingComment, setPendingComment] = useState<any | null>(null);
   const [commentInput, setCommentInput] = useState('');
@@ -66,17 +67,30 @@ export default function TeacherReview() {
     }).catch(() => setLoading(false));
   }, [id]);
 
+  // Корректное определение абсолютного смещения внутри контейнера с дочерними span-элементами
   const handleMouseUp = () => {
     const selection = window.getSelection();
-    if (!selection || selection.isCollapsed || !textRef.current) return;
+    if (!selection || selection.isCollapsed || !textContainerRef.current) return;
+    
     const range = selection.getRangeAt(0);
     const preSelectionRange = range.cloneRange();
-    preSelectionRange.selectNodeContents(textRef.current);
+    
+    // Инициализируем диапазон от начала контейнера, где находится выделение
+    preSelectionRange.selectNodeContents(textContainerRef.current);
+    // Ограничиваем диапазон началом текущего выделения пользователя
     preSelectionRange.setEnd(range.startContainer, range.startOffset);
+    
+    // .toString() возвращает чистый текст без HTML тегов, что дает точный индекс
     const startOffset = preSelectionRange.toString().length;
     const text = selection.toString();
     const endOffset = startOffset + text.length;
-    setPendingComment({ task_number: activeTaskTab + 1, start_index: startOffset, end_index: endOffset, selected_text: text });
+    
+    setPendingComment({ 
+      task_number: activeTaskTab + 1, 
+      start_index: startOffset, 
+      end_index: endOffset, 
+      selected_text: text 
+    });
   };
 
   const saveComment = () => { if (!commentInput.trim() || !pendingComment) return; setComments([...comments, { ...pendingComment, comment_text: commentInput }]); setPendingComment(null); setCommentInput(''); window.getSelection()?.removeAllRanges(); };
@@ -163,8 +177,12 @@ export default function TeacherReview() {
                 {activeTopic?.image && (<img src={activeTopic.image} alt="Task diagram" onClick={() => setIsLightboxOpen(true)} className="max-h-[250px] w-full object-contain rounded mt-3 cursor-zoom-in border border-[#1f1f23]" />)}
               </div>
               <div className="relative text-base sm:text-lg leading-relaxed text-white min-h-[300px] bg-black border border-[#1f1f23] p-6 rounded select-text">
-                <div ref={textRef} className="absolute opacity-0 pointer-events-none whitespace-pre-wrap font-serif block w-full h-full" style={{ zIndex: -1 }}>{textContent}</div>
-                <div className="whitespace-pre-wrap font-sans selection:bg-[#0071e3]/20 relative z-0 cursor-text" onMouseUp={handleMouseUp}>
+                {/* Убрали старый скрытый div, вызывавший смещение координат */}
+                <div 
+                  ref={textContainerRef}
+                  className="whitespace-pre-wrap font-sans selection:bg-[#0071e3]/20 relative z-0 cursor-text animate-fade-in" 
+                  onMouseUp={handleMouseUp}
+                >
                   <HighlightedText text={textContent} comments={comments} taskIndex={activeTaskTab} focusedCommentIndex={focusedCommentIndex} setFocusedCommentIndex={setFocusedCommentIndex} />
                 </div>
               </div>
