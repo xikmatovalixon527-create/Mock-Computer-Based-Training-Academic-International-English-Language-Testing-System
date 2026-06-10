@@ -23,6 +23,7 @@ export default function TeacherDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'pending' | 'reviewed'>('all');
+  const [mockFilter, setMockFilter] = useState<'all' | 'mock' | 'practice'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [user, setUser] = useState<{ fullName: string } | null>(null);
   const [viewTab, setViewTab] = useState<'submissions' | 'students'>('submissions');
@@ -156,6 +157,13 @@ export default function TeacherDashboard() {
     return 'Both'; 
   };
 
+  const getIsMock = (topic: string) => {
+    try {
+      const p = JSON.parse(topic);
+      return p.isMock === true;
+    } catch { return false; }
+  };
+
   const getEssaysCountByGroup = (groupName: string) => {
     return essays.filter(e => {
       const g = e.group_name || '';
@@ -169,11 +177,19 @@ export default function TeacherDashboard() {
   const filteredEssays = essays.filter(essay => {
     const matchesFilter = filter === 'all' || essay.status === filter;
     let topicText = essay.topic_text;
-    try { const parsed = JSON.parse(topicText); topicText = parsed.task2?.text || parsed.task1?.text || topicText; } catch {}
+    let isMock = false;
+    try { 
+      const parsed = JSON.parse(topicText); 
+      topicText = parsed.task2?.text || parsed.task1?.text || topicText; 
+      isMock = parsed.isMock === true;
+    } catch {}
+    
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch = topicText.toLowerCase().includes(searchLower) || (essay.full_name || '').toLowerCase().includes(searchLower);
     const matchesGroup = selectedGroup === 'all' || (selectedGroup === 'even' && (essay.group_name || '').toLowerCase().startsWith('even')) || (selectedGroup === 'odd' && (essay.group_name || '').toLowerCase().startsWith('odd')) || essay.group_name === selectedGroup;
-    return matchesFilter && matchesSearch && matchesGroup;
+    const matchesMock = mockFilter === 'all' || (mockFilter === 'mock' ? isMock : !isMock);
+
+    return matchesFilter && matchesSearch && matchesGroup && matchesMock;
   });
 
   const filteredStudentsGrouped = students.filter(student => student.full_name.toLowerCase().includes(searchQuery.toLowerCase())).filter(student => {
@@ -277,7 +293,19 @@ export default function TeacherDashboard() {
                 />
               </div>
               <div className="flex bg-black p-0.5 rounded-lg border border-[#1f1f23] gap-1">
-                {[{ id: 'all', label: 'All' }, { id: 'pending', label: 'Unmarked' }, { id: 'reviewed', label: 'Reviewed' }].map((tab) => (
+                {[{ id: 'all', label: 'All Modes' }, { id: 'mock', label: 'Mock' }, { id: 'practice', label: 'Practice' }].map((tab) => (
+                  <button 
+                    type="button" 
+                    key={tab.id} 
+                    onClick={() => setMockFilter(tab.id as any)} 
+                    className={`px-3.5 py-1.5 rounded-md text-[10px] font-bold uppercase cursor-pointer ${mockFilter === tab.id ? 'bg-[#121214] text-white' : 'text-[#8a8a8e] hover:text-white'}`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex bg-black p-0.5 rounded-lg border border-[#1f1f23] gap-1">
+                {[{ id: 'all', label: 'All Status' }, { id: 'pending', label: 'Unmarked' }, { id: 'reviewed', label: 'Reviewed' }].map((tab) => (
                   <button 
                     type="button" 
                     key={tab.id} 
@@ -304,6 +332,7 @@ export default function TeacherDashboard() {
                       <tr>
                         <th className="px-5 py-3 text-left font-bold uppercase tracking-wider text-[#8a8a8e]">Date</th>
                         <th className="px-5 py-3 text-left font-bold uppercase tracking-wider text-[#8a8a8e]">Student</th>
+                        <th className="px-5 py-3 text-left font-bold uppercase tracking-wider text-[#8a8a8e]">Mode</th>
                         <th className="px-5 py-3 text-left font-bold uppercase tracking-wider text-[#8a8a8e]">Task</th>
                         <th className="px-5 py-3 text-left font-bold uppercase tracking-wider text-[#8a8a8e]">Group</th>
                         <th className="px-5 py-3 text-left font-bold uppercase tracking-wider text-[#8a8a8e]">Status</th>
@@ -315,6 +344,11 @@ export default function TeacherDashboard() {
                         <tr key={essay.id} className="hover:bg-[#121214]/30">
                           <td className="px-5 py-3.5 text-[#8a8a8e] font-mono">{format(new Date(essay.created_at), 'MMM dd, yyyy')}</td>
                           <td className="px-5 py-3.5 font-semibold text-white">{essay.full_name || 'Unknown'}</td>
+                          <td className="px-5 py-3.5">
+                            <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${getIsMock(essay.topic_text) ? 'bg-[#bf5af2]/15 text-[#bf5af2] border border-[#bf5af2]/30' : 'bg-[#30d158]/15 text-[#30d158] border border-[#30d158]/30'}`}>
+                              {getIsMock(essay.topic_text) ? 'Mock' : 'Practice'}
+                            </span>
+                          </td>
                           <td className="px-5 py-3.5 uppercase text-[#8a8a8e]">{getTaskLabel(essay.task_type)}</td>
                           <td className="px-5 py-3.5 text-[#8a8a8e]">{essay.group_name || 'No Group'}</td>
                           <td className="px-5 py-3.5">

@@ -9,9 +9,10 @@ import { Navbar } from '@/components/navbar';
 export default function CustomizableTestSetup() {
   const [taskType, setTaskType] = useState('task2');
   const [task1Text, setTask1Text] = useState('');
-  const [task1Img, setTask1Img] = useState('');
+  const [task1Images, setTask1Images] = useState<string[]>([]);
   const [task2Text, setTask2Text] = useState('');
-  const [task2Img, setTask2Img] = useState('');
+  const [task2Images, setTask2Images] = useState<string[]>([]);
+  const [isMock, setIsMock] = useState(false);
   const router = useRouter();
 
   const handleStart = () => {
@@ -26,8 +27,9 @@ export default function CustomizableTestSetup() {
     sessionStorage.setItem('ielts_test_config', JSON.stringify({
       taskType,
       topicText: JSON.stringify({
-        task1: { text: task1Text, image: task1Img },
-        task2: { text: task2Text, image: task2Img }
+        task1: { text: task1Text, images: task1Images },
+        task2: { text: task2Text, images: task2Images },
+        isMock
       }),
       mode: 'customizable',
       noTimer: true
@@ -35,13 +37,19 @@ export default function CustomizableTestSetup() {
     router.push('/test-room');
   };
 
-  const handleImageUpload = (setter: (v: string) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setter(reader.result as string);
-      reader.readAsDataURL(file);
+  const handleImageUpload = (setter: React.Dispatch<React.SetStateAction<string[]>>) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => setter(prev => [...prev, reader.result as string]);
+        reader.readAsDataURL(file);
+      });
     }
+  };
+
+  const removeImage = (setter: React.Dispatch<React.SetStateAction<string[]>>, index: number) => {
+    setter(prev => prev.filter((_, i) => i !== index));
   };
 
   return (
@@ -68,6 +76,14 @@ export default function CustomizableTestSetup() {
         </div>
 
         <div className="bg-[#121214] border border-[#1f1f23] rounded-xl p-5 sm:p-6 space-y-6">
+          <div className="space-y-3">
+            <label className="block text-xs uppercase tracking-wider font-semibold text-[#8a8a8e]">Test Mode</label>
+            <div className="flex gap-3">
+              <button onClick={() => setIsMock(true)} className={`flex-1 py-3 rounded-lg border font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${isMock ? 'border-[#0071e3] bg-[#0071e3]/10 text-[#0071e3]' : 'border-[#1f1f23] bg-[#121214] text-[#8a8a8e] hover:border-[#374151]'}`}>Mock Exam</button>
+              <button onClick={() => setIsMock(false)} className={`flex-1 py-3 rounded-lg border font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${!isMock ? 'border-[#30d158] bg-[#30d158]/10 text-[#30d158]' : 'border-[#1f1f23] bg-[#121214] text-[#8a8a8e] hover:border-[#374151]'}`}>Practice (Unmock)</button>
+            </div>
+          </div>
+
           <div className="space-y-3">
             <label className="block text-xs uppercase tracking-wider font-semibold text-[#8a8a8e]">Select Practice Format</label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -105,21 +121,20 @@ export default function CustomizableTestSetup() {
               </div>
               
               <div className="space-y-2">
-                <label className="block text-xs uppercase tracking-wider font-semibold text-[#8a8a8e]">Diagram (Optional)</label>
-                <div className="flex items-center gap-3">
-                  {task1Img ? (
-                    <>
-                      <img src={task1Img} alt="" className="w-16 h-16 rounded object-cover border border-[#1f1f23]" />
-                      <button onClick={() => setTask1Img('')} className="text-[10px] uppercase font-bold tracking-wider text-[#ff453a] hover:underline flex items-center gap-1 cursor-pointer">
-                        <Trash2 className="w-3 h-3" /> Remove
+                <label className="block text-xs uppercase tracking-wider font-semibold text-[#8a8a8e]">Diagrams (Optional)</label>
+                <div className="flex flex-wrap items-center gap-3">
+                  {task1Images.map((img, i) => (
+                    <div key={i} className="relative group">
+                      <img src={img} alt="" className="w-16 h-16 rounded object-cover border border-[#1f1f23]" />
+                      <button onClick={() => removeImage(setTask1Images, i)} className="absolute -top-2 -right-2 bg-[#ff453a] text-white rounded-full p-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                        <Trash2 className="w-3 h-3" />
                       </button>
-                    </>
-                  ) : (
-                    <label className="flex items-center gap-2 px-3 py-1.5 border border-dashed border-[#1f1f23] rounded-lg cursor-pointer hover:bg-black transition-all text-xs text-[#f5f5f7] font-medium uppercase tracking-wider">
-                      <Upload className="w-3.5 h-3.5" /> Upload diagram
-                      <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload(setTask1Img)} />
-                    </label>
-                  )}
+                    </div>
+                  ))}
+                  <label className="flex items-center gap-2 px-3 py-1.5 border border-dashed border-[#1f1f23] rounded-lg cursor-pointer hover:bg-black transition-all text-xs text-[#f5f5f7] font-medium uppercase tracking-wider">
+                    <Upload className="w-3.5 h-3.5" /> Add photo(s)
+                    <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload(setTask1Images)} />
+                  </label>
                 </div>
               </div>
               <div className="space-y-2">
@@ -143,21 +158,20 @@ export default function CustomizableTestSetup() {
               </div>
               
               <div className="space-y-2">
-                <label className="block text-xs uppercase tracking-wider font-semibold text-[#8a8a8e]">Image (Optional)</label>
-                <div className="flex items-center gap-3">
-                  {task2Img ? (
-                    <>
-                      <img src={task2Img} alt="" className="w-16 h-16 rounded object-cover border border-[#1f1f23]" />
-                      <button onClick={() => setTask2Img('')} className="text-[10px] uppercase font-bold tracking-wider text-[#ff453a] hover:underline flex items-center gap-1 cursor-pointer">
-                        <Trash2 className="w-3 h-3" /> Remove
+                <label className="block text-xs uppercase tracking-wider font-semibold text-[#8a8a8e]">Images (Optional)</label>
+                <div className="flex flex-wrap items-center gap-3">
+                  {task2Images.map((img, i) => (
+                    <div key={i} className="relative group">
+                      <img src={img} alt="" className="w-16 h-16 rounded object-cover border border-[#1f1f23]" />
+                      <button onClick={() => removeImage(setTask2Images, i)} className="absolute -top-2 -right-2 bg-[#ff453a] text-white rounded-full p-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                        <Trash2 className="w-3 h-3" />
                       </button>
-                    </>
-                  ) : (
-                    <label className="flex items-center gap-2 px-3 py-1.5 border border-dashed border-[#1f1f23] rounded-lg cursor-pointer hover:bg-black transition-all text-xs text-[#f5f5f7] font-medium uppercase tracking-wider">
-                      <Upload className="w-3.5 h-3.5" /> Upload image
-                      <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload(setTask2Img)} />
-                    </label>
-                  )}
+                    </div>
+                  ))}
+                  <label className="flex items-center gap-2 px-3 py-1.5 border border-dashed border-[#1f1f23] rounded-lg cursor-pointer hover:bg-black transition-all text-xs text-[#f5f5f7] font-medium uppercase tracking-wider">
+                    <Upload className="w-3.5 h-3.5" /> Add photo(s)
+                    <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload(setTask2Images)} />
+                  </label>
                 </div>
               </div>
               <div className="space-y-2">

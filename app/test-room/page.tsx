@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { formatTime, countWords } from '@/lib/utils';
 import { ChevronDown } from 'lucide-react';
 
-interface TestConfig { taskType: string; topicText: string; mode: 'original' | 'customizable'; noTimer?: boolean; }
+interface TestConfig { taskType: string; topicText: string; mode: 'original' | 'customizable'; noTimer?: boolean; isMock?: boolean; }
 
 export default function ExamRoom() {
   const router = useRouter();
@@ -17,7 +17,7 @@ export default function ExamRoom() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [topicData, setTopicData] = useState<any>(null);
   const [showPrompt, setShowPrompt] = useState(true); 
-  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [lightboxImg, setLightboxImg] = useState<string | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -120,7 +120,16 @@ export default function ExamRoom() {
           {showPrompt && (
             <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-4">
               <div className="p-6 bg-black border border-[#1f1f23] rounded-xl"><p className="text-base sm:text-lg leading-relaxed text-[#f5f5f7] whitespace-pre-wrap">{currentTopic?.text}</p></div>
-              {currentTopic?.image && <img src={currentTopic.image} alt="Expanded prompt diagram" onClick={() => setIsLightboxOpen(true)} className="max-h-[350px] mx-auto cursor-zoom-in rounded border border-[#1f1f23]" />}
+              
+              {currentTopic?.images?.length > 0 ? (
+                <div className="flex flex-col gap-4 mt-4">
+                  {currentTopic.images.map((img: string, i: number) => (
+                    <img key={i} src={img} alt={`Diagram ${i+1}`} onClick={() => setLightboxImg(img)} className="max-h-[350px] mx-auto cursor-zoom-in rounded border border-[#1f1f23]" />
+                  ))}
+                </div>
+              ) : currentTopic?.image ? (
+                <img src={currentTopic.image} alt="Expanded prompt diagram" onClick={() => setLightboxImg(currentTopic.image)} className="max-h-[350px] mx-auto cursor-zoom-in rounded border border-[#1f1f23] mt-4" />
+              ) : null}
             </div>
           )}
         </div>
@@ -135,7 +144,11 @@ export default function ExamRoom() {
         <span className="text-xs uppercase font-bold tracking-widest text-[#8a8a8e]">IELTS Academic Module Practice</span>
         <button onClick={() => setIsConfirmOpen(true)} disabled={isSubmitting} className="bg-white hover:bg-[#cfcfcf] text-black px-5 py-2 text-xs font-bold uppercase tracking-wider rounded-full cursor-pointer transition-colors">Submit Evaluation</button>
       </footer>
-      {isLightboxOpen && currentTopic?.image && (<div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 cursor-zoom-out" onClick={() => setIsLightboxOpen(false)}><img src={currentTopic.image} alt="Expanded diagram" className="max-w-full max-h-full object-contain rounded" /></div>)}
+      {lightboxImg && (
+        <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 cursor-zoom-out" onClick={() => setLightboxImg(null)}>
+          <img src={lightboxImg} alt="Expanded diagram" className="max-w-full max-h-full object-contain rounded" />
+        </div>
+      )}
 
       {isConfirmOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">

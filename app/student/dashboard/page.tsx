@@ -45,6 +45,13 @@ export default function StudentDashboard() {
     } catch { return topic; }
   };
 
+  const getIsMock = (topic: string) => {
+    try {
+      const p = JSON.parse(topic);
+      return p.isMock === true;
+    } catch { return false; }
+  };
+
   return (
     <Navbar>
       <div className="space-y-8">
@@ -153,6 +160,9 @@ export default function StudentDashboard() {
                         <div className="flex flex-wrap items-center gap-2.5">
                           <span className="px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider border border-[#0071e3]/20 bg-[#0071e3]/10 text-[#2997ff] rounded-full">
                             {essay.task_type === 'task1' ? 'Task 1 (Report)' : essay.task_type === 'task2' ? 'Task 2 (Essay)' : 'Composite Session'}
+                          </span>
+                          <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${getIsMock(essay.topic_text) ? 'bg-[#bf5af2]/15 text-[#bf5af2] border border-[#bf5af2]/30' : 'bg-[#30d158]/15 text-[#30d158] border border-[#30d158]/30'}`}>
+                            {getIsMock(essay.topic_text) ? 'Mock' : 'Practice'}
                           </span>
                           <span className="text-xs text-[#6e6e73]">
                             {format(new Date(essay.created_at), 'MMMM dd, yyyy · hh:mm a')}

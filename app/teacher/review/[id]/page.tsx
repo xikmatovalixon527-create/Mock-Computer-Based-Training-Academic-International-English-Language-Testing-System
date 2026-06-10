@@ -30,6 +30,7 @@ export default function TeacherReview() {
   
   const [activeTaskTab, setActiveTaskTab] = useState(0); 
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [lightboxImg, setLightboxImg] = useState<string | null>(null);
   const [focusedCommentIndex, setFocusedCommentIndex] = useState<number | null>(null);
   const [skipScoring, setSkipScoring] = useState(false);
   const [isConfirmSubmitOpen, setIsConfirmSubmitOpen] = useState(false);
@@ -174,7 +175,15 @@ export default function TeacherReview() {
             <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4">
               <div className="bg-black border border-[#1f1f23] p-4 rounded-lg">
                 <p className="text-xs sm:text-sm text-[#f5f5f7] italic">{activeTopic?.text}</p>
-                {activeTopic?.image && (<img src={activeTopic.image} alt="Task diagram" onClick={() => setIsLightboxOpen(true)} className="max-h-[250px] w-full object-contain rounded mt-3 cursor-zoom-in border border-[#1f1f23]" />)}
+                {activeTopic?.images && activeTopic.images.length > 0 ? (
+                  <div className="space-y-2 mt-3">
+                    {activeTopic.images.map((img: string, idx: number) => (
+                      <img key={idx} src={img} alt={`Task diagram ${idx + 1}`} onClick={() => setLightboxImg(img)} className="max-h-[250px] w-full object-contain rounded cursor-zoom-in border border-[#1f1f23]" />
+                    ))}
+                  </div>
+                ) : activeTopic?.image ? (
+                  <img src={activeTopic.image} alt="Task diagram" onClick={() => setLightboxImg(activeTopic.image)} className="max-h-[250px] w-full object-contain rounded mt-3 cursor-zoom-in border border-[#1f1f23]" />
+                ) : null}
               </div>
               <div className="relative text-base sm:text-lg leading-relaxed text-white min-h-[300px] bg-black border border-[#1f1f23] p-6 rounded select-text">
                 {/* Убрали старый скрытый div, вызывавший смещение координат */}
@@ -261,7 +270,7 @@ export default function TeacherReview() {
             </div>
          </div>
       </div>
-      {isLightboxOpen && activeTopic?.image && (<div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 cursor-zoom-out" onClick={() => setIsLightboxOpen(false)}><img src={activeTopic.image} alt="Expanded diagram" className="max-w-full max-h-full object-contain rounded" /></div>)}
+      {lightboxImg && (<div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 cursor-zoom-out" onClick={() => setLightboxImg(null)}><img src={lightboxImg} alt="Expanded diagram" className="max-w-full max-h-full object-contain rounded" /></div>)}
 
       {isConfirmSubmitOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">

@@ -18,6 +18,7 @@ export default function StudentReviewResult() {
   const [activeTaskTab, setActiveTaskTab] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [lightboxImg, setLightboxImg] = useState<string | null>(null);
   const [focusedCommentIndex, setFocusedCommentIndex] = useState<number | null>(null);
 
   useEffect(() => {
@@ -79,7 +80,15 @@ export default function StudentReviewResult() {
           )}
           <div className="bg-[#121214] p-5 rounded-lg border border-[#1f1f23]">
             <h4 className="text-[10px] uppercase tracking-wider text-[#8a8a8e] font-bold mb-2">Prompt Context</h4>
-            {activeTopic?.image && (<img src={activeTopic.image} alt="Task diagram" onClick={() => setIsLightboxOpen(true)} className="max-h-[300px] w-full object-contain rounded mb-4 cursor-zoom-in border border-[#1f1f23]" />)}
+            {activeTopic?.images && activeTopic.images.length > 0 ? (
+              <div className="space-y-2 mb-4">
+                {activeTopic.images.map((img: string, idx: number) => (
+                  <img key={idx} src={img} alt={`Task diagram ${idx + 1}`} onClick={() => setLightboxImg(img)} className="max-h-[300px] w-full object-contain rounded cursor-zoom-in border border-[#1f1f23]" />
+                ))}
+              </div>
+            ) : activeTopic?.image ? (
+              <img src={activeTopic.image} alt="Task diagram" onClick={() => setLightboxImg(activeTopic.image)} className="max-h-[300px] w-full object-contain rounded mb-4 cursor-zoom-in border border-[#1f1f23]" />
+            ) : null}
             <p className="text-[#f5f5f7] text-sm sm:text-base leading-relaxed italic font-serif">{activeTopic?.text}</p>
           </div>
           <div className="bg-[#121214] rounded-lg border border-[#1f1f23] overflow-hidden">
@@ -149,9 +158,9 @@ export default function StudentReviewResult() {
           )}
         </div>
       </div>
-      {isLightboxOpen && activeTopic?.image && (
-        <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 cursor-zoom-out" onClick={() => setIsLightboxOpen(false)}>
-          <img src={activeTopic.image} alt="Expanded diagram" className="max-w-full max-h-full object-contain rounded" />
+      {lightboxImg && (
+        <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 cursor-zoom-out" onClick={() => setLightboxImg(null)}>
+          <img src={lightboxImg} alt="Expanded diagram" className="max-w-full max-h-full object-contain rounded" />
         </div>
       )}
     </div>
