@@ -1,3 +1,4 @@
+// File: app/student/test/setup-customizable/page.tsx
 'use client';
 
 import { useState } from 'react';
@@ -24,6 +25,11 @@ export default function CustomizableTestSetup() {
       toast.error('Please enter the Task 2 prompt.');
       return;
     }
+
+    // Принудительно очищаем старый таймер и старый черновик перед началом нового теста
+    localStorage.removeItem(`ielts_timer_end_${taskType}`);
+    localStorage.removeItem(`ielts_draft_${taskType}`);
+
     sessionStorage.setItem('ielts_test_config', JSON.stringify({
       taskType,
       topicText: JSON.stringify({

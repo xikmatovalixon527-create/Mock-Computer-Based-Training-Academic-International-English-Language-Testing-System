@@ -1,3 +1,4 @@
+// File: app/student/test/setup/page.tsx
 'use client';
 
 import { useState } from 'react';
@@ -37,6 +38,11 @@ export default function TestSetup() {
       toast.error('Please enter the Task 2 prompt.');
       return;
     }
+
+    // Принудительно очищаем старый таймер и старый черновик перед началом нового теста
+    localStorage.removeItem(`ielts_timer_end_${taskType}`);
+    localStorage.removeItem(`ielts_draft_${taskType}`);
+
     sessionStorage.setItem('ielts_test_config', JSON.stringify({
       taskType,
       topicText: JSON.stringify({
@@ -124,7 +130,6 @@ export default function TestSetup() {
             </div>
           </div>
 
-          {/* Dynamic Timer Selection Row */}
           <div className="space-y-3">
             <label className="block text-xs uppercase tracking-wider font-semibold text-[#8a8a8e]">Select Timer Duration</label>
             <div className="flex gap-3">

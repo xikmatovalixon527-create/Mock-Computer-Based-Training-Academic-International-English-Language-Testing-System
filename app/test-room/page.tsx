@@ -62,6 +62,12 @@ export default function ExamRoom() {
       sessionStorage.removeItem('ielts_test_config');
       localStorage.removeItem('ielts_test_config_backup');
       localStorage.removeItem(`ielts_draft_${cfg?.taskType}`);
+      
+      // Очищаем время окончания таймера
+      if (cfg?.taskType) {
+        localStorage.removeItem(`ielts_timer_end_${cfg.taskType}`);
+      }
+      
       router.push('/student/dashboard');
     } catch {
       toast.dismiss(); 
@@ -83,9 +89,22 @@ export default function ExamRoom() {
     }
     if (parsed.taskType === 'task2') setActiveTab(1);
     
+    // Постоянный таймер, устойчивый к перезагрузкам
     if (!parsed.noTimer) {
       const durationMinutes = parsed.duration || (parsed.taskType === 'task1' ? 20 : parsed.taskType === 'task2' ? 40 : 60);
-      setTimeLeft(durationMinutes * 60);
+      const timerKey = `ielts_timer_end_${parsed.taskType}`;
+      const savedEndTime = localStorage.getItem(timerKey);
+      
+      let endTime: number;
+      if (savedEndTime) {
+        endTime = parseInt(savedEndTime, 10);
+        const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+        setTimeLeft(remaining);
+      } else {
+        endTime = Date.now() + (durationMinutes * 60 * 1000);
+        localStorage.setItem(timerKey, endTime.toString());
+        setTimeLeft(durationMinutes * 60);
+      }
     }
 
     const draftStr = localStorage.getItem(`ielts_draft_${parsed.taskType}`);
@@ -106,7 +125,7 @@ export default function ExamRoom() {
 
   useEffect(() => {
     if (!config || config.noTimer || timeLeft <= 0) { 
-      if(timeLeft <= 0 && config && !config.noTimer) handleForceSubmit(); 
+      if (timeLeft <= 0 && config && !config.noTimer) handleForceSubmit(); 
       return; 
     }
     timerRef.current = setTimeout(() => setTimeLeft(p => p - 1), 1000);
@@ -148,36 +167,36 @@ export default function ExamRoom() {
       <main className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
         {/* Левая колонка с заданием и картинкой */}
         <div className={`w-full lg:w-1/2 flex flex-col bg-[#121214]/50 lg:border-r border-[#1f1f23] ${showPrompt ? 'h-[45vh] lg:h-auto' : ''}`}>
-          <div className="px-4 py-3 bg-[#121214] flex justify-between cursor-pointer" onClick={() => { if (window.innerWidth < 1024) setShowPrompt(!showPrompt); }}>
+          <div className="px-4 py-3 bg-[#121214] flex justify-between cursor-pointer shrink-0" onClick={() => { if (window.innerWidth < 1024) setShowPrompt(!showPrompt); }}>
             <span className="text-[10px] font-bold uppercase tracking-wider text-[#8a8a8e]">Prompt Instructions</span>
             <ChevronDown className={`lg:hidden w-4 h-4 transition-transform duration-200 ${showPrompt ? 'rotate-180' : ''}`} />
           </div>
           {showPrompt && (
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-4">
-              <div className="p-6 bg-black border border-[#1f1f23] rounded-xl">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 flex flex-col gap-4">
+              <div className="p-6 bg-black border border-[#1f1f23] rounded-xl shrink-0">
                 <p className="text-base sm:text-lg leading-relaxed text-[#f5f5f7] whitespace-pre-wrap">{currentTopic?.text}</p>
               </div>
               
               {currentTopic?.images?.length > 0 ? (
-                <div className="flex flex-col gap-4 mt-4">
+                <div className="flex-1 flex flex-col gap-4">
                   {currentTopic.images.map((img: string, i: number) => (
-                    <div key={i} className="relative w-full overflow-hidden rounded-xl border border-[#1f1f23] bg-black/40 flex justify-center items-center p-2">
+                    <div key={i} className="flex-1 min-h-[350px] lg:min-h-[500px] relative w-full overflow-hidden rounded-xl border border-[#1f1f23] bg-black/40 flex justify-center items-center p-3">
                       <img 
                         src={img} 
                         alt={`Diagram ${i+1}`} 
                         onClick={() => setLightboxImg(img)} 
-                        className="w-full h-auto max-h-[480px] lg:max-h-[600px] object-contain cursor-zoom-in transition-transform duration-200 hover:scale-[1.01]" 
+                        className="w-full h-auto max-h-[85vh] object-contain cursor-zoom-in transition-transform duration-200 hover:scale-[1.01]" 
                       />
                     </div>
                   ))}
                 </div>
               ) : currentTopic?.image ? (
-                <div className="relative w-full overflow-hidden rounded-xl border border-[#1f1f23] bg-black/40 flex justify-center items-center p-2 mt-4">
+                <div className="flex-1 min-h-[350px] lg:min-h-[500px] relative w-full overflow-hidden rounded-xl border border-[#1f1f23] bg-black/40 flex justify-center items-center p-3">
                   <img 
                     src={currentTopic.image} 
                     alt="Expanded prompt diagram" 
                     onClick={() => setLightboxImg(currentTopic.image)} 
-                    className="w-full h-auto max-h-[480px] lg:max-h-[600px] object-contain cursor-zoom-in transition-transform duration-200 hover:scale-[1.01]" 
+                    className="w-full h-auto max-h-[85vh] object-contain cursor-zoom-in transition-transform duration-200 hover:scale-[1.01]" 
                   />
                 </div>
               ) : null}
@@ -206,7 +225,6 @@ export default function ExamRoom() {
         <button onClick={() => setIsConfirmOpen(true)} disabled={isSubmitting} className="bg-white hover:bg-[#cfcfcf] text-black px-5 py-2 text-xs font-bold uppercase tracking-wider rounded-full cursor-pointer transition-colors">Submit Evaluation</button>
       </footer>
       
-      {/* Lightbox для полноэкранного просмотра */}
       {lightboxImg && (
         <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 cursor-zoom-out" onClick={() => setLightboxImg(null)}>
           <img src={lightboxImg} alt="Expanded diagram" className="max-w-full max-h-full object-contain rounded" />
