@@ -1,3 +1,4 @@
+// File: app/test-room/page.tsx
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -12,7 +13,7 @@ interface TestConfig {
   mode: 'original' | 'customizable'; 
   noTimer?: boolean; 
   isMock?: boolean; 
-  duration?: number; // Added to interface configuration
+  duration?: number;
 }
 
 export default function ExamRoom() {
@@ -45,7 +46,16 @@ export default function ExamRoom() {
     const fTask2 = (cfg?.taskType === 'task2' || cfg?.taskType === 'both') ? curTexts[1] : null;
 
     try {
-      const res = await fetch('/api/essays', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ task_type: cfg?.taskType, topic_text: cfg?.topicText, content_task1: fTask1, content_task2: fTask2 }) });
+      const res = await fetch('/api/essays', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ 
+          task_type: cfg?.taskType, 
+          topic_text: cfg?.topicText, 
+          content_task1: fTask1, 
+          content_task2: fTask2 
+        }) 
+      });
       if (!res.ok) throw new Error('Submission failed');
       toast.dismiss(); 
       toast.success('Exam session uploaded successfully!');
@@ -66,10 +76,13 @@ export default function ExamRoom() {
     localStorage.setItem('ielts_test_config_backup', saved);
     const parsed: TestConfig = JSON.parse(saved);
     setConfig(parsed);
-    try { setTopicData(JSON.parse(parsed.topicText)); } catch { setTopicData({ task1: { text: parsed.topicText }, task2: { text: parsed.topicText } }); }
+    try { 
+      setTopicData(JSON.parse(parsed.topicText)); 
+    } catch { 
+      setTopicData({ task1: { text: parsed.topicText }, task2: { text: parsed.topicText } }); 
+    }
     if (parsed.taskType === 'task2') setActiveTab(1);
     
-    // Read dynamic duration parameter or fallback to default base timers
     if (!parsed.noTimer) {
       const durationMinutes = parsed.duration || (parsed.taskType === 'task1' ? 20 : parsed.taskType === 'task2' ? 40 : 60);
       setTimeLeft(durationMinutes * 60);
@@ -85,11 +98,17 @@ export default function ExamRoom() {
 
     const handleBeforeUnload = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; };
     window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => { window.removeEventListener('beforeunload', handleBeforeUnload); if (timerRef.current) clearTimeout(timerRef.current); };
+    return () => { 
+      window.removeEventListener('beforeunload', handleBeforeUnload); 
+      if (timerRef.current) clearTimeout(timerRef.current); 
+    };
   }, [router]);
 
   useEffect(() => {
-    if (!config || config.noTimer || timeLeft <= 0) { if(timeLeft <= 0 && config && !config.noTimer) handleForceSubmit(); return; }
+    if (!config || config.noTimer || timeLeft <= 0) { 
+      if(timeLeft <= 0 && config && !config.noTimer) handleForceSubmit(); 
+      return; 
+    }
     timerRef.current = setTimeout(() => setTimeLeft(p => p - 1), 1000);
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [timeLeft, config, handleForceSubmit]);
@@ -119,43 +138,75 @@ export default function ExamRoom() {
               <button onClick={() => setActiveTab(0)} className={`px-4 py-1.5 text-xs uppercase font-bold rounded-full cursor-pointer transition-all ${activeTab === 0 ? 'bg-[#121214] text-white' : 'text-[#8a8a8e]'}`}>Task 1</button>
               <button onClick={() => setActiveTab(1)} className={`px-4 py-1.5 text-xs uppercase font-bold rounded-full cursor-pointer transition-all ${activeTab === 1 ? 'bg-[#121214] text-white' : 'text-[#8a8a8e]'}`}>Task 2</button>
             </div>
-          ) : <span className="text-xs font-bold uppercase tracking-wider text-[#0071e3]">Task {config.taskType === 'task1' ? '1' : '2'}</span>}
+          ) : (
+            <span className="text-xs font-bold uppercase tracking-wider text-[#0071e3]">Task {config.taskType === 'task1' ? '1' : '2'}</span>
+          )}
         </div>
         {!config.noTimer && <div className="text-sm font-bold font-mono text-[#0071e3] bg-black px-4 py-1.5 border border-[#1f1f23] rounded-full">{formatTime(timeLeft)}</div>}
       </header>
+      
       <main className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
-        <div className={`w-full lg:w-1/2 flex flex-col bg-[#121214]/50 lg:border-r border-[#1f1f23] ${showPrompt ? 'h-[40vh] lg:h-auto' : ''}`}>
-          <div className="px-4 py-3 bg-[#121214] flex justify-between" onClick={() => { if (window.innerWidth < 1024) setShowPrompt(!showPrompt); }}>
+        {/* Левая колонка с заданием и картинкой */}
+        <div className={`w-full lg:w-1/2 flex flex-col bg-[#121214]/50 lg:border-r border-[#1f1f23] ${showPrompt ? 'h-[45vh] lg:h-auto' : ''}`}>
+          <div className="px-4 py-3 bg-[#121214] flex justify-between cursor-pointer" onClick={() => { if (window.innerWidth < 1024) setShowPrompt(!showPrompt); }}>
             <span className="text-[10px] font-bold uppercase tracking-wider text-[#8a8a8e]">Prompt Instructions</span>
-            <ChevronDown className={`lg:hidden w-4 h-4 ${showPrompt ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`lg:hidden w-4 h-4 transition-transform duration-200 ${showPrompt ? 'rotate-180' : ''}`} />
           </div>
           {showPrompt && (
-            <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-4">
-              <div className="p-6 bg-black border border-[#1f1f23] rounded-xl"><p className="text-base sm:text-lg leading-relaxed text-[#f5f5f7] whitespace-pre-wrap">{currentTopic?.text}</p></div>
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-4">
+              <div className="p-6 bg-black border border-[#1f1f23] rounded-xl">
+                <p className="text-base sm:text-lg leading-relaxed text-[#f5f5f7] whitespace-pre-wrap">{currentTopic?.text}</p>
+              </div>
               
               {currentTopic?.images?.length > 0 ? (
                 <div className="flex flex-col gap-4 mt-4">
                   {currentTopic.images.map((img: string, i: number) => (
-                    <img key={i} src={img} alt={`Diagram ${i+1}`} onClick={() => setLightboxImg(img)} className="max-h-[350px] mx-auto cursor-zoom-in rounded border border-[#1f1f23]" />
+                    <div key={i} className="relative w-full overflow-hidden rounded-xl border border-[#1f1f23] bg-black/40 flex justify-center items-center p-2">
+                      <img 
+                        src={img} 
+                        alt={`Diagram ${i+1}`} 
+                        onClick={() => setLightboxImg(img)} 
+                        className="w-full h-auto max-h-[480px] lg:max-h-[600px] object-contain cursor-zoom-in transition-transform duration-200 hover:scale-[1.01]" 
+                      />
+                    </div>
                   ))}
                 </div>
               ) : currentTopic?.image ? (
-                <img src={currentTopic.image} alt="Expanded prompt diagram" onClick={() => setLightboxImg(currentTopic.image)} className="max-h-[350px] mx-auto cursor-zoom-in rounded border border-[#1f1f23] mt-4" />
+                <div className="relative w-full overflow-hidden rounded-xl border border-[#1f1f23] bg-black/40 flex justify-center items-center p-2 mt-4">
+                  <img 
+                    src={currentTopic.image} 
+                    alt="Expanded prompt diagram" 
+                    onClick={() => setLightboxImg(currentTopic.image)} 
+                    className="w-full h-auto max-h-[480px] lg:max-h-[600px] object-contain cursor-zoom-in transition-transform duration-200 hover:scale-[1.01]" 
+                  />
+                </div>
               ) : null}
             </div>
           )}
         </div>
+        
+        {/* Правая колонка с вводом текста */}
         <div className="w-full lg:w-1/2 flex flex-col min-h-0 flex-1 relative bg-black">
-          <textarea className="flex-1 w-full p-6 sm:p-8 text-lg bg-transparent resize-none focus:outline-none text-white font-sans leading-relaxed selection:bg-[#0071e3]/20" value={texts[activeTab]} onChange={e => handleTextChange(e.target.value)} disabled={isSubmitting} spellCheck={false} placeholder="Start typing your response document here..." />
+          <textarea 
+            className="flex-1 w-full p-6 sm:p-8 text-lg bg-transparent resize-none focus:outline-none text-white font-sans leading-relaxed selection:bg-[#0071e3]/20" 
+            value={texts[activeTab]} 
+            onChange={e => handleTextChange(e.target.value)} 
+            disabled={isSubmitting} 
+            spellCheck={false} 
+            placeholder="Start typing your response document here..." 
+          />
           <div className="px-6 py-4 bg-[#121214] text-xs flex justify-between font-mono border-t border-[#1f1f23]">
             <span className={wordCount < minWords ? 'text-[#ff9f0a]' : 'text-[#30d158]'}>{wordCount} / {minWords} Words</span>
           </div>
         </div>
       </main>
+      
       <footer className="shrink-0 border-t border-[#1f1f23] bg-[#121214] px-6 h-16 flex items-center justify-between">
         <span className="text-xs uppercase font-bold tracking-widest text-[#8a8a8e]">IELTS Academic Module Practice</span>
         <button onClick={() => setIsConfirmOpen(true)} disabled={isSubmitting} className="bg-white hover:bg-[#cfcfcf] text-black px-5 py-2 text-xs font-bold uppercase tracking-wider rounded-full cursor-pointer transition-colors">Submit Evaluation</button>
       </footer>
+      
+      {/* Lightbox для полноэкранного просмотра */}
       {lightboxImg && (
         <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 cursor-zoom-out" onClick={() => setLightboxImg(null)}>
           <img src={lightboxImg} alt="Expanded diagram" className="max-w-full max-h-full object-contain rounded" />
