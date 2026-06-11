@@ -6,7 +6,14 @@ import { toast } from 'sonner';
 import { formatTime, countWords } from '@/lib/utils';
 import { ChevronDown } from 'lucide-react';
 
-interface TestConfig { taskType: string; topicText: string; mode: 'original' | 'customizable'; noTimer?: boolean; isMock?: boolean; }
+interface TestConfig { 
+  taskType: string; 
+  topicText: string; 
+  mode: 'original' | 'customizable'; 
+  noTimer?: boolean; 
+  isMock?: boolean; 
+  duration?: number; // Added to interface configuration
+}
 
 export default function ExamRoom() {
   const router = useRouter();
@@ -61,7 +68,12 @@ export default function ExamRoom() {
     setConfig(parsed);
     try { setTopicData(JSON.parse(parsed.topicText)); } catch { setTopicData({ task1: { text: parsed.topicText }, task2: { text: parsed.topicText } }); }
     if (parsed.taskType === 'task2') setActiveTab(1);
-    if (!parsed.noTimer) setTimeLeft(parsed.taskType === 'task1' ? 20 * 60 : parsed.taskType === 'task2' ? 40 * 60 : 60 * 60);
+    
+    // Read dynamic duration parameter or fallback to default base timers
+    if (!parsed.noTimer) {
+      const durationMinutes = parsed.duration || (parsed.taskType === 'task1' ? 20 : parsed.taskType === 'task2' ? 40 : 60);
+      setTimeLeft(durationMinutes * 60);
+    }
 
     const draftStr = localStorage.getItem(`ielts_draft_${parsed.taskType}`);
     if (draftStr) {

@@ -8,12 +8,25 @@ import { Navbar } from '@/components/navbar';
 
 export default function TestSetup() {
   const [taskType, setTaskType] = useState('task2');
+  const [duration, setDuration] = useState(40); // default value matching Task 2
   const [task1Text, setTask1Text] = useState('');
   const [task1Images, setTask1Images] = useState<string[]>([]);
   const [task2Text, setTask2Text] = useState('');
   const [task2Images, setTask2Images] = useState<string[]>([]);
   const [isMock, setIsMock] = useState(true);
   const router = useRouter();
+
+  // Reset duration to defaults when user switches formats
+  const handleTaskTypeChange = (type: string) => {
+    setTaskType(type);
+    if (type === 'task1') {
+      setDuration(20);
+    } else if (type === 'task2') {
+      setDuration(40);
+    } else {
+      setDuration(60);
+    }
+  };
 
   const handleStart = () => {
     if ((taskType === 'task1' || taskType === 'both') && !task1Text.trim()) {
@@ -31,7 +44,8 @@ export default function TestSetup() {
         task2: { text: task2Text, images: task2Images },
         isMock
       }),
-      mode: 'original'
+      mode: 'original',
+      duration: duration // save custom duration
     }));
     router.push('/test-room');
   };
@@ -49,6 +63,13 @@ export default function TestSetup() {
 
   const removeImage = (setter: React.Dispatch<React.SetStateAction<string[]>>, index: number) => {
     setter(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Dynamic helper to return updated timer options
+  const getDurationOptions = () => {
+    if (taskType === 'task1') return [20, 30]; // Updated to 30 minutes
+    if (taskType === 'task2') return [40, 60];
+    return [60, 120];
   };
 
   return (
@@ -77,13 +98,13 @@ export default function TestSetup() {
             <label className="block text-xs uppercase tracking-wider font-semibold text-[#8a8a8e]">Select Exam Format</label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
-                { id: 'task1', title: 'Task 1 Only', time: '20 min', min: '150 words' },
-                { id: 'task2', title: 'Task 2 Only', time: '40 min', min: '250 words' },
-                { id: 'both', title: 'Full Exam', time: '60 min', min: 'Both tasks' }
+                { id: 'task1', title: 'Task 1 Only', info: '20 or 30 min', min: '150 words' },
+                { id: 'task2', title: 'Task 2 Only', info: '40 or 60 min', min: '250 words' },
+                { id: 'both', title: 'Full Exam', info: '60 or 120 min', min: 'Both tasks' }
               ].map(opt => (
                 <button
                   key={opt.id}
-                  onClick={() => setTaskType(opt.id)}
+                  onClick={() => handleTaskTypeChange(opt.id)}
                   className={`p-4 rounded-lg border text-left transition-all cursor-pointer ${
                     taskType === opt.id
                       ? 'border-white bg-black'
@@ -95,9 +116,32 @@ export default function TestSetup() {
                     {taskType === opt.id && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
                   </h3>
                   <div className="space-y-1 text-xs text-[#8a8a8e] font-semibold font-mono">
-                    <div className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-[#8a8a8e]" /> {opt.time}</div>
+                    <div className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-[#8a8a8e]" /> {opt.info}</div>
                     <div className="flex items-center gap-1.5"><BookOpen className="w-3.5 h-3.5 text-[#8a8a8e]" /> {opt.min}</div>
                   </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Dynamic Timer Selection Row */}
+          <div className="space-y-3">
+            <label className="block text-xs uppercase tracking-wider font-semibold text-[#8a8a8e]">Select Timer Duration</label>
+            <div className="flex gap-3">
+              {getDurationOptions().map(mins => (
+                <button
+                  key={mins}
+                  type="button"
+                  onClick={() => setDuration(mins)}
+                  className={`flex-1 py-3 rounded-lg border font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
+                    duration === mins
+                      ? 'border-white bg-black text-white'
+                      : 'border-[#1f1f23] bg-[#121214] text-[#8a8a8e] hover:border-[#374151]'
+                  }`}
+                >
+                  {mins} Minutes {mins === (taskType === 'task1' ? 20 : taskType === 'task2' ? 40 : 60) && (
+                    <span className="text-[10px] text-[#6e6e73] lowercase font-normal italic ml-1">(default)</span>
+                  )}
                 </button>
               ))}
             </div>
