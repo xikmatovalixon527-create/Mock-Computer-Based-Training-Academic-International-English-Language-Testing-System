@@ -1,3 +1,5 @@
+// File: app/api/essays/route.ts
+
 import { requireAuth, successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
 import { getEssays, getEssayById, createEssay, deleteEssay, deleteLiveDraft } from '@/lib/queries';
 
@@ -18,7 +20,8 @@ export async function GET(request: Request) {
       return successResponse({ essay });
     }
 
-    const studentFilter = session.role === 'student' ? session.id : undefined;
+    const studentIdParam = searchParams.get('student_id');
+    const studentFilter = session.role === 'student' ? session.id : (studentIdParam || undefined);
     const essays = await getEssays(studentFilter);
     return successResponse({ essays });
   } catch (err) {

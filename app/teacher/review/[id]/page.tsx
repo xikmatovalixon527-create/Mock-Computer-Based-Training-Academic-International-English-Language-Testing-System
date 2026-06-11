@@ -1,9 +1,11 @@
+// File: app/teacher/review/[id]/page.tsx
+
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { toast } from 'sonner';
-import { calculateOverallBand, getBandTextColor } from '@/lib/utils';
+import { calculateOverallBand, getBandTextColor, getBandBadgeStyle } from '@/lib/utils';
 import { Essay } from '@/types';
 import { HighlightedText } from '@/components/highlighted-text';
 
@@ -11,10 +13,12 @@ export default function TeacherReview() {
   const { id } = useParams() as { id: string };
   const router = useRouter();
   
-  const [essay, setEssay] = useState<Essay | null>(null);
+  const [essay, setEssay] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [topicData, setTopicData] = useState<any>(null);
+  const [previousEssays, setPreviousEssays] = useState<any[]>([]);
+  const [showSclerosisCard, setShowSclerosisCard] = useState(true);
   
   const [task1Scores, setTask1Scores] = useState({ ta: 0, cc: 0, lr: 0, gra: 0 });
   const [task1Feedbacks, setTask1Feedbacks] = useState({ ta: '', cc: '', lr: '', gra: '' });
@@ -22,7 +26,6 @@ export default function TeacherReview() {
   const [task2Feedbacks, setTask2Feedbacks] = useState({ ta: '', cc: '', lr: '', gra: '' });
   const [overallFeedback, setOverallFeedback] = useState('');
   
-  // Используем один реф для контейнера, в котором непосредственно происходит выделение текста
   const textContainerRef = useRef<HTMLDivElement>(null);
   const [comments, setComments] = useState<any[]>([]);
   const [pendingComment, setPendingComment] = useState<any | null>(null);
@@ -41,9 +44,24 @@ export default function TeacherReview() {
       fetch(`/api/reviews?essay_id=${id}`).then(res => res.json())
     ]).then(([essayData, reviewData]) => {
       if (essayData.essay) {
-        setEssay(essayData.essay);
-        try { setTopicData(JSON.parse(essayData.essay.topic_text)); } catch { setTopicData({ task1: { text: essayData.essay.topic_text }, task2: { text: essayData.essay.topic_text } }); }
-        if (essayData.essay.task_type === 'task2') setActiveTaskTab(1);
+        const currentEssay = essayData.essay;
+        setEssay(currentEssay);
+        try { setTopicData(JSON.parse(currentEssay.topic_text)); } catch { setTopicData({ task1: { text: currentEssay.topic_text }, task2: { text: currentEssay.topic_text } }); }
+        if (currentEssay.task_type === 'task2') setActiveTaskTab(1);
+
+        // Запрос истории предыдущих работ проверяемого студента
+        if (currentEssay.student_id) {
+          fetch(`/api/essays?student_id=${currentEssay.student_id}`)
+            .then(res => res.json())
+            .then(historyData => {
+              if (historyData.essays) {
+                // Исключаем текущее эссе из истории
+                const filtered = historyData.essays.filter((e: any) => e.id !== id);
+                setPreviousEssays(filtered);
+              }
+            })
+            .catch(err => console.error('Failed to load student context history:', err));
+        }
       }
       if (reviewData.review) {
         try {
@@ -68,7 +86,6 @@ export default function TeacherReview() {
     }).catch(() => setLoading(false));
   }, [id]);
 
-  // Корректное определение абсолютного смещения внутри контейнера с дочерними span-элементами
   const handleMouseUp = () => {
     const selection = window.getSelection();
     if (!selection || selection.isCollapsed || !textContainerRef.current) return;
@@ -76,12 +93,9 @@ export default function TeacherReview() {
     const range = selection.getRangeAt(0);
     const preSelectionRange = range.cloneRange();
     
-    // Инициализируем диапазон от начала контейнера, где находится выделение
     preSelectionRange.selectNodeContents(textContainerRef.current);
-    // Ограничиваем диапазон началом текущего выделения пользователя
     preSelectionRange.setEnd(range.startContainer, range.startOffset);
     
-    // .toString() возвращает чистый текст без HTML тегов, что дает точный индекс
     const startOffset = preSelectionRange.toString().length;
     const text = selection.toString();
     const endOffset = startOffset + text.length;
@@ -186,7 +200,6 @@ export default function TeacherReview() {
                 ) : null}
               </div>
               <div className="relative text-base sm:text-lg leading-relaxed text-white min-h-[300px] bg-black border border-[#1f1f23] p-6 rounded select-text">
-                {/* Убрали старый скрытый div, вызывавший смещение координат */}
                 <div 
                   ref={textContainerRef}
                   className="whitespace-pre-wrap font-sans selection:bg-[#0071e3]/20 relative z-0 cursor-text animate-fade-in" 
@@ -248,6 +261,79 @@ export default function TeacherReview() {
             </div>
          </div>
          <div className="w-full lg:w-1/2 p-4 sm:p-6 overflow-y-auto bg-black">
+            {/* Склерозник (Карточка студента) */}
+            <div className="bg-[#121214] border border-[#1f1f23] rounded-lg overflow-hidden mb-5">
+              <button 
+                type="button"
+                onClick={() => setShowSclerosisCard(!showSclerosisCard)} 
+                className="w-full px-4 py-3 flex items-center justify-between bg-zinc-900/40 hover:bg-zinc-900 transition-colors text-left cursor-pointer"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#a1a1aa] flex items-center gap-1.5">
+                    🧠 Склерозник (Информация о студенте)
+                  </span>
+                </div>
+                <span className="text-[10px] uppercase font-bold text-[#8a8a8e]">
+                  {showSclerosisCard ? 'Скрыть' : 'Показать'}
+                </span>
+              </button>
+
+              {showSclerosisCard && (
+                <div className="p-4 space-y-3.5 border-t border-[#1f1f23] text-xs">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="block text-[10px] uppercase tracking-wider text-[#71717a] font-semibold mb-0.5">ФИО Студента</span>
+                      <span className="font-semibold text-white text-sm">{essay.full_name || 'Неизвестно'}</span>
+                    </div>
+                    <div>
+                      <span className="block text-[10px] uppercase tracking-wider text-[#71717a] font-semibold mb-0.5">Класс / Группа</span>
+                      <span className="font-medium text-[#0071e3] uppercase tracking-wider">{essay.group_name || 'Не назначена'}</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 border-t border-[#1f1f23]/60 pt-3">
+                    <div>
+                      <span className="block text-[10px] uppercase tracking-wider text-[#71717a] font-semibold mb-0.5">Всего работ</span>
+                      <span className="font-mono font-bold text-white text-sm">{previousEssays.length + 1}</span>
+                    </div>
+                    <div>
+                      <span className="block text-[10px] uppercase tracking-wider text-[#71717a] font-semibold mb-0.5">Дата регистрации</span>
+                      <span className="text-[#a1a1aa] font-mono">
+                        {essay.student_created_at 
+                          ? new Date(essay.student_created_at).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }) 
+                          : '—'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {previousEssays.length > 0 && (
+                    <div className="border-t border-[#1f1f23]/60 pt-3 space-y-1.5">
+                      <span className="block text-[10px] uppercase tracking-wider text-[#71717a] font-semibold">История оценок (Динамика)</span>
+                      <div className="flex flex-wrap gap-1.5 mt-1">
+                        {previousEssays.map((prev) => {
+                          const hasBand = prev.status === 'reviewed' && prev.overall_band !== null;
+                          return (
+                            <div 
+                              key={prev.id} 
+                              title={prev.task_type === 'task1' ? 'Task 1' : prev.task_type === 'task2' ? 'Task 2' : 'Both'}
+                              className={`px-2 py-1 rounded text-[10px] font-mono font-bold flex items-center gap-1 ${
+                                hasBand 
+                                  ? getBandBadgeStyle(prev.overall_band)
+                                  : 'bg-zinc-900 border border-zinc-800 text-zinc-500'
+                              }`}
+                            >
+                              <span>T{prev.task_type === 'task1' ? '1' : prev.task_type === 'task2' ? '2' : 'B'}:</span>
+                              <span>{hasBand ? Number(prev.overall_band).toFixed(1) : 'FB'}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
              <div className="mb-6 p-4 rounded bg-[#121214] border border-[#1f1f23] flex items-center justify-between">
                <label htmlFor="skip-scoring" className="text-xs font-bold uppercase tracking-wider text-[#8a8a8e] cursor-pointer">Feedback Only Mode (No Scores)</label>
                <input id="skip-scoring" type="checkbox" checked={skipScoring} onChange={(e) => setSkipScoring(e.target.checked)} className="cursor-pointer" />

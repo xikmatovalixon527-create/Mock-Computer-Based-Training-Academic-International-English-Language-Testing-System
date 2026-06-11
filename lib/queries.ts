@@ -1,3 +1,5 @@
+// File: lib/queries.ts
+
 import { supabaseAdmin } from './supabase';
 
 export async function findUserByName(fullName: string) {
@@ -36,8 +38,12 @@ export async function getEssays(studentId?: string) {
 }
 
 export async function getEssayById(id: string) {
-  const { data } = await supabaseAdmin.from('essays').select('*, users!inner(full_name)').eq('id', id).maybeSingle();
-  if (data) data.full_name = (data.users as any).full_name;
+  const { data } = await supabaseAdmin.from('essays').select('*, users!inner(full_name, group_name, created_at)').eq('id', id).maybeSingle();
+  if (data) {
+    data.full_name = (data.users as any).full_name;
+    data.group_name = (data.users as any).group_name;
+    data.student_created_at = (data.users as any).created_at;
+  }
   return data;
 }
 
