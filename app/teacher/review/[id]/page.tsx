@@ -5,7 +5,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { toast } from 'sonner';
-import { calculateOverallBand, getBandTextColor, getBandBadgeStyle } from '@/lib/utils';
+import { calculateOverallBand, getBandTextColor, getBandBadgeStyle, countWords } from '@/lib/utils';
 import { Essay } from '@/types';
 import { HighlightedText } from '@/components/highlighted-text';
 
@@ -18,7 +18,7 @@ export default function TeacherReview() {
   const [submitting, setSubmitting] = useState(false);
   const [topicData, setTopicData] = useState<any>(null);
   const [previousEssays, setPreviousEssays] = useState<any[]>([]);
-  const [showSclerosisCard, setShowSclerosisCard] = useState(true);
+  const [showStudentCard, setShowStudentCard] = useState(true);
   
   const [task1Scores, setTask1Scores] = useState({ ta: 0, cc: 0, lr: 0, gra: 0 });
   const [task1Feedbacks, setTask1Feedbacks] = useState({ ta: '', cc: '', lr: '', gra: '' });
@@ -208,6 +208,17 @@ export default function TeacherReview() {
                   <HighlightedText text={textContent} comments={comments} taskIndex={activeTaskTab} focusedCommentIndex={focusedCommentIndex} setFocusedCommentIndex={setFocusedCommentIndex} />
                 </div>
               </div>
+
+              {/* Счётчик слов */}
+              <div className="px-4 py-2 bg-[#121214] border border-[#1f1f23] rounded flex justify-between items-center text-xs font-mono text-[#8a8a8e] mt-2 select-none">
+                <span>Количество слов: <strong className="text-white">{countWords(textContent)}</strong></span>
+                {essay.task_type === 'both' && (
+                  <span className="text-[10px] text-[#6e6e73]">
+                    (Task 1: {countWords(essay.content_task1 || '')} | Task 2: {countWords(essay.content_task2 || '')})
+                  </span>
+                )}
+              </div>
+
               {pendingComment && (
                 <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[#121214] p-5 border border-[#1f1f23] w-[90%] sm:w-96 z-50 rounded-lg shadow-none space-y-3">
                   <div className="text-xs bg-black p-3 border border-[#1f1f23] rounded truncate italic text-[#8a8a8e]">&quot;{pendingComment.selected_text}&quot;</div>
@@ -261,24 +272,24 @@ export default function TeacherReview() {
             </div>
          </div>
          <div className="w-full lg:w-1/2 p-4 sm:p-6 overflow-y-auto bg-black">
-            {/* Склерозник (Карточка студента) */}
+            {/* Карточка студента */}
             <div className="bg-[#121214] border border-[#1f1f23] rounded-lg overflow-hidden mb-5">
               <button 
                 type="button"
-                onClick={() => setShowSclerosisCard(!showSclerosisCard)} 
+                onClick={() => setShowStudentCard(!showStudentCard)} 
                 className="w-full px-4 py-3 flex items-center justify-between bg-zinc-900/40 hover:bg-zinc-900 transition-colors text-left cursor-pointer"
               >
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-[#a1a1aa] flex items-center gap-1.5">
-                    🧠 Склерозник (Информация о студенте)
+                    📋 Информация о студенте
                   </span>
                 </div>
                 <span className="text-[10px] uppercase font-bold text-[#8a8a8e]">
-                  {showSclerosisCard ? 'Скрыть' : 'Показать'}
+                  {showStudentCard ? 'Скрыть' : 'Показать'}
                 </span>
               </button>
 
-              {showSclerosisCard && (
+              {showStudentCard && (
                 <div className="p-4 space-y-3.5 border-t border-[#1f1f23] text-xs">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
