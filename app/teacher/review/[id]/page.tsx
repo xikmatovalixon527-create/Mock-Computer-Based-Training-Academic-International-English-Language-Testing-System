@@ -38,6 +38,11 @@ export default function TeacherReview() {
   const [skipScoring, setSkipScoring] = useState(false);
   const [isConfirmSubmitOpen, setIsConfirmSubmitOpen] = useState(false);
 
+  // States for Draggable Modal Comment Box
+  const [modalPos, setModalPos] = useState<{ x: number; y: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0 });
+
   useEffect(() => {
     Promise.all([
       fetch(`/api/essays?id=${id}`).then(res => res.json()),
@@ -85,6 +90,57 @@ export default function TeacherReview() {
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [id]);
+
+  // Initialize and center the draggable modal when a new comment is pending
+  useEffect(() => {
+    if (pendingComment) {
+      if (typeof window !== 'undefined') {
+        setModalPos({
+          x: window.innerWidth / 2 - 192, // ~192px is half of standard sm:w-96 (384px)
+          y: window.innerHeight / 2 - 160
+        });
+      }
+    } else {
+      setModalPos(null);
+    }
+  }, [pendingComment]);
+
+  // Draggable logic hook
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging || !modalPos) return;
+      setModalPos({
+        x: e.clientX - dragStart.current.x,
+        y: e.clientY - dragStart.current.y
+      });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, modalPos]);
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    // Do not initiate drag if user interacts with textarea or buttons inside modal
+    if (target.closest('textarea') || target.closest('button')) {
+      return;
+    }
+    setIsDragging(true);
+    dragStart.current = {
+      x: e.clientX - (modalPos?.x || 0),
+      y: e.clientY - (modalPos?.y || 0)
+    };
+  };
 
   const handleMouseUp = () => {
     const selection = window.getSelection();
@@ -219,13 +275,37 @@ export default function TeacherReview() {
                 )}
               </div>
 
-              {pendingComment && (
-                <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[#121214] p-5 border border-[#1f1f23] w-[90%] sm:w-96 z-50 rounded-lg shadow-none space-y-3">
+              {/* Draggable Modal for Comments */}
+              {pendingComment && modalPos && (
+                <div 
+                  onMouseDown={handleMouseDown}
+                  style={{
+                    position: 'fixed',
+                    left: `${modalPos.x}px`,
+                    top: `${modalPos.y}px`,
+                  }}
+                  className="bg-[#121214] p-5 border border-[#1f1f23] w-[90%] sm:w-96 z-50 rounded-lg shadow-2xl space-y-3 cursor-grab active:cursor-grabbing select-none"
+                >
+                  <div className="flex items-center justify-between pb-1.5 border-b border-[#1f1f23]/60">
+                    <span className="text-[10px] uppercase tracking-wider text-[#0071e3] font-bold">💬 Draggable Annotation</span>
+                    <span className="text-[9px] text-[#6e6e73] italic">Drag here to move</span>
+                  </div>
                   <div className="text-xs bg-black p-3 border border-[#1f1f23] rounded truncate italic text-[#8a8a8e]">&quot;{pendingComment.selected_text}&quot;</div>
-                  <textarea autoFocus value={commentInput} onChange={e => setCommentInput(e.target.value)} className="w-full text-xs p-3 border border-[#1f1f23] rounded bg-black text-white focus:outline-none focus:border-[#0071e3] resize-none" rows={4} placeholder="Write comment for selected text segment..." />
-                  <div className="flex justify-end space-x-2"><button onClick={cancelComment} className="px-3 py-1.5 border border-[#1f1f23] text-[#8a8a8e] hover:text-white rounded-full text-xs uppercase tracking-wider font-semibold cursor-pointer">Cancel</button><button onClick={saveComment} className="px-3 py-1.5 bg-white text-black hover:bg-[#cfcfcf] rounded-full text-xs uppercase tracking-wider font-semibold cursor-pointer">Save</button></div>
+                  <textarea 
+                    autoFocus 
+                    value={commentInput} 
+                    onChange={e => setCommentInput(e.target.value)} 
+                    className="w-full text-xs p-3 border border-[#1f1f23] rounded bg-black text-white focus:outline-none focus:border-[#0071e3] resize-none cursor-text" 
+                    rows={4} 
+                    placeholder="Write comment for selected text segment..." 
+                  />
+                  <div className="flex justify-end space-x-2">
+                    <button onClick={cancelComment} className="px-3 py-1.5 border border-[#1f1f23] text-[#8a8a8e] hover:text-white rounded-full text-xs uppercase tracking-wider font-semibold cursor-pointer">Cancel</button>
+                    <button onClick={saveComment} className="px-3 py-1.5 bg-white text-black hover:bg-[#cfcfcf] rounded-full text-xs uppercase tracking-wider font-semibold cursor-pointer">Save</button>
+                  </div>
                 </div>
               )}
+
               {currentComments.length > 0 && (
                 <div className="mt-6 space-y-3">
                    {comments.map((c, i) => {

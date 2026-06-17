@@ -186,10 +186,18 @@ export default function StudentDashboard() {
                             </Link>
                           </>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] uppercase tracking-wider font-bold bg-[#ff9f0a]/10 text-[#ff9f0a] border border-[#ff9f0a]/20">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#ff9f0a]" />
-                            Awaiting Marking
-                          </span>
+                          <>
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] uppercase tracking-wider font-bold bg-[#ff9f0a]/10 text-[#ff9f0a] border border-[#ff9f0a]/20">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#ff9f0a]" />
+                              Awaiting Marking
+                            </span>
+                            <Link
+                              href={`/student/review/${essay.id}`}
+                              className="px-4 py-2 text-xs font-semibold text-neutral-400 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-full transition-colors flex items-center gap-1 cursor-pointer"
+                            >
+                              View Writing <ArrowRight className="w-3.5 h-3.5" />
+                            </Link>
+                          </>
                         )}
                       </div>
                     </div>
