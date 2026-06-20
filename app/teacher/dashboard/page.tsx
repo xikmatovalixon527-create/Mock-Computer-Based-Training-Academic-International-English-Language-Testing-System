@@ -20,8 +20,24 @@ interface Student {
 
 type ActiveTab = 'submissions' | 'students' | 'control_panel' | 'leaderboard' | 'account';
 
+// Глобальные вспомогательные функции (безопасны от ошибок видимости переменных и оптимизированы)
+const getTaskLabel = (type: string) => { 
+  if (type === 'task1') return 'Task 1'; 
+  if (type === 'task2') return 'Task 2'; 
+  return 'Both'; 
+};
+
+const getIsMock = (topic: string) => {
+  try {
+    const p = JSON.parse(topic);
+    return p.isMock === true;
+  } catch { 
+    return false; 
+  }
+};
+
 export default function TeacherDashboard() {
-  const router = useRouter(); // Инициализация хука навигации Next.js
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<ActiveTab>('submissions');
   const [essays, setEssays] = useState<Essay[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
@@ -270,12 +286,6 @@ export default function TeacherDashboard() {
     } finally {
       setIsUpdatingSettings(false);
     }
-  };
-
-  const getTaskLabel = (type: string) => { 
-    if (type === 'task1') return 'Task 1'; 
-    if (type === 'task2') return 'Task 2'; 
-    return 'Both'; 
   };
 
   const getEssaysCountByGroup = (groupName: string) => {
