@@ -1,23 +1,12 @@
-import { requireAuth, successResponse, handleApiError } from '@/lib/api-utils';
-
-export async function GET() {
-  try {
-    const { session, error } = await requireAuth();
-    if (error) return error;
-    
-    return successResponse({ user: session });
-  } catch (err) {
-    return handleApiError(err);
-  }
-}import { requireAuth, successResponse, handleApiError } from '@/lib/api-utils';
+import { requireAuth, successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
 import { supabaseAdmin } from '@/lib/supabase';
 
 export async function GET() {
   try {
-    const { session, error } = await requireAuth();
-    if (error) return error;
+    const { session, error: authError } = await requireAuth();
+    if (authError) return authError;
 
-    // Fetch the verified profile to fetch group assignments securely
+    // Безопасный запрос профиля пользователя из базы данных
     const { data: user, error: dbErr } = await supabaseAdmin
       .from('users')
       .select('id, full_name, role, group_name, created_at')
@@ -25,7 +14,7 @@ export async function GET() {
       .single();
 
     if (dbErr || !user) {
-      return error;
+      return errorResponse('User profile not found in database.', 404);
     }
     
     return successResponse({ 

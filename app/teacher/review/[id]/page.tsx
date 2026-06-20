@@ -34,7 +34,7 @@ export default function TeacherReview() {
   const [skipScoring, setSkipScoring] = useState(false);
   const [isConfirmSubmitOpen, setIsConfirmSubmitOpen] = useState(false);
 
-  // States for Draggable Modal Comment Box
+  // Состояния для перетаскивания комментариев
   const [modalPos, setModalPos] = useState<{ x: number; y: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
@@ -47,10 +47,13 @@ export default function TeacherReview() {
       if (essayData.essay) {
         const currentEssay = essayData.essay;
         setEssay(currentEssay);
-        try { setTopicData(JSON.parse(currentEssay.topic_text)); } catch { setTopicData({ task1: { text: currentEssay.topic_text }, task2: { text: currentEssay.topic_text } }); }
+        try { 
+          setTopicData(JSON.parse(currentEssay.topic_text)); 
+        } catch { 
+          setTopicData({ task1: { text: currentEssay.topic_text }, task2: { text: currentEssay.topic_text } }); 
+        }
         if (currentEssay.task_type === 'task2') setActiveTaskTab(1);
 
-        // Fetch student portfolio grade history
         if (currentEssay.student_id) {
           fetch(`/api/essays?student_id=${currentEssay.student_id}`)
             .then(res => res.json())
@@ -99,13 +102,23 @@ export default function TeacherReview() {
     }
   }, [pendingComment]);
 
+  // Элегантный слушатель перетаскивания с защитой границ экрана
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDragging || !modalPos) return;
-      setModalPos({
-        x: e.clientX - dragStart.current.x,
-        y: e.clientY - dragStart.current.y
-      });
+
+      let newX = e.clientX - dragStart.current.x;
+      let newY = e.clientY - dragStart.current.y;
+
+      const modalWidth = 384; 
+      const modalHeight = 280; 
+      const maxX = window.innerWidth - modalWidth;
+      const maxY = window.innerHeight - modalHeight;
+
+      newX = Math.max(0, Math.min(newX, maxX));
+      newY = Math.max(0, Math.min(newY, maxY));
+
+      setModalPos({ x: newX, y: newY });
     };
 
     const handleMouseUp = () => {
@@ -116,6 +129,7 @@ export default function TeacherReview() {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
     }
+
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
@@ -134,7 +148,7 @@ export default function TeacherReview() {
     };
   };
 
-  const handleMouseUp = () => {
+  const handleMouseUpTextSelection = () => {
     const selection = window.getSelection();
     if (!selection || selection.isCollapsed || !textContainerRef.current) return;
     
@@ -156,9 +170,23 @@ export default function TeacherReview() {
     });
   };
 
-  const saveComment = () => { if (!commentInput.trim() || !pendingComment) return; setComments([...comments, { ...pendingComment, comment_text: commentInput }]); setPendingComment(null); setCommentInput(''); window.getSelection()?.removeAllRanges(); };
-  const cancelComment = () => { setPendingComment(null); setCommentInput(''); window.getSelection()?.removeAllRanges(); };
-  const removeComment = (index: number) => { setComments(c => c.filter((_, i) => i !== index)); };
+  const saveComment = () => { 
+    if (!commentInput.trim() || !pendingComment) return; 
+    setComments([...comments, { ...pendingComment, comment_text: commentInput }]); 
+    setPendingComment(null); 
+    setCommentInput(''); 
+    window.getSelection()?.removeAllRanges(); 
+  };
+
+  const cancelComment = () => { 
+    setPendingComment(null); 
+    setCommentInput(''); 
+    window.getSelection()?.removeAllRanges(); 
+  };
+
+  const removeComment = (index: number) => { 
+    setComments(c => c.filter((_, i) => i !== index)); 
+  };
 
   const handleSubmit = async () => {
     if (!essay) return;
@@ -250,14 +278,13 @@ export default function TeacherReview() {
               <div className="relative text-base sm:text-lg leading-relaxed text-white min-h-[300px] bg-black border border-[#1f1f23] p-6 rounded select-text">
                 <div 
                   ref={textContainerRef}
-                  className="whitespace-pre-wrap font-sans selection:bg-[#0071e3]/20 relative z-0 cursor-text animate-fade-in" 
-                  onMouseUp={handleMouseUp}
+                  className="whitespace-pre-wrap font-sans selection:bg-[#0071e3]/20 relative z-0 cursor-text" 
+                  onMouseUp={handleMouseUpTextSelection}
                 >
                   <HighlightedText text={textContent} comments={comments} taskIndex={activeTaskTab} focusedCommentIndex={focusedCommentIndex} setFocusedCommentIndex={setFocusedCommentIndex} />
                 </div>
               </div>
 
-              {/* Word Counter */}
               <div className="px-4 py-2 bg-[#121214] border border-[#1f1f23] rounded flex justify-between items-center text-xs font-mono text-[#8a8a8e] mt-2 select-none">
                 <span>Word Count: <strong className="text-white">{countWords(textContent)}</strong></span>
                 {essay.task_type === 'both' && (
@@ -267,7 +294,6 @@ export default function TeacherReview() {
                 )}
               </div>
 
-              {/* Draggable Modal for Comments */}
               {pendingComment && modalPos && (
                 <div 
                   onMouseDown={handleMouseDown}
@@ -344,8 +370,7 @@ export default function TeacherReview() {
             </div>
          </div>
          <div className="w-full lg:w-1/2 p-4 sm:p-6 overflow-y-auto bg-black">
-            {/* Student Info Card */}
-            <div className="bg-[#121214] border border-[#1f1f23] rounded-lg overflow-hidden mb-5 animate-fade-in">
+            <div className="bg-[#121214] border border-[#1f1f23] rounded-lg overflow-hidden mb-5">
               <button 
                 type="button"
                 onClick={() => setShowStudentCard(!showStudentCard)} 
