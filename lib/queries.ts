@@ -31,7 +31,7 @@ export async function deleteStudent(id: string) {
 }
 
 export async function getEssays(studentId?: string) {
-  let query = supabaseAdmin.from('essays').select('*, users!inner(full_name, group_name)').order('created_at', { ascending: false });
+  let query = supabaseAdmin.from('essays').select('*, users!inner(full_name, group_name)').neq('status', 'draft').order('created_at', { ascending: false });
   if (studentId) query = query.eq('student_id', studentId);
   const { data } = await query;
   return data?.map(e => ({ ...e, full_name: (e.users as any).full_name, group_name: (e.users as any).group_name })) || [];

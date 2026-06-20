@@ -1,0 +1,5 @@
+{
+  "name": "IELTS CBT Platform",
+  "description": "Professional IELTS Academic Writing practice and examiner evaluation platform with interactive word counters and live auto-saving draft synchronizers.",
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

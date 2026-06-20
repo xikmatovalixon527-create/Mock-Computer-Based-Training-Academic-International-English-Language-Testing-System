@@ -3,9 +3,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { BookOpen, Trash2, ArrowRight, ArrowLeft, Upload, Infinity } from 'lucide-react';
+import { BookOpen, Trash2, ArrowRight, ArrowLeft, Upload, Infinity, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Navbar } from '@/components/navbar';
+import { AccessCodeModal } from '@/components/access-code-modal';
 
 export default function CustomizableTestSetup() {
   const [taskType, setTaskType] = useState('task2');
@@ -14,9 +15,11 @@ export default function CustomizableTestSetup() {
   const [task2Text, setTask2Text] = useState('');
   const [task2Images, setTask2Images] = useState<string[]>([]);
   const [isMock, setIsMock] = useState(false);
+  const [showCodeModal, setShowCodeModal] = useState(false);
+  const [isCheckingSettings, setIsCheckingSettings] = useState(false);
   const router = useRouter();
 
-  const handleStart = () => {
+  const handleStart = async () => {
     if ((taskType === 'task1' || taskType === 'both') && !task1Text.trim()) {
       toast.error('Please enter the Task 1 prompt.');
       return;
@@ -26,21 +29,66 @@ export default function CustomizableTestSetup() {
       return;
     }
 
-    // Принудительно очищаем старый таймер и старый черновик перед началом нового теста
-    localStorage.removeItem(`ielts_timer_end_${taskType}`);
-    localStorage.removeItem(`ielts_draft_${taskType}`);
+    setIsCheckingSettings(true);
+    try {
+      const res = await fetch('/api/settings');
+      const settings = await res.json();
 
-    sessionStorage.setItem('ielts_test_config', JSON.stringify({
-      taskType,
-      topicText: JSON.stringify({
+      if (settings.tests_enabled === false) {
+        toast.error('Practice sessions are currently disabled globally by the instructor.');
+        setIsCheckingSettings(false);
+        return;
+      }
+
+      if (settings.code_required === true) {
+        setShowCodeModal(true);
+        setIsCheckingSettings(false);
+        return;
+      }
+
+      // Start testing immediately if code is not required
+      proceedToTest();
+    } catch (err) {
+      toast.error('Syncing requirements with server failed, please retry.');
+      setIsCheckingSettings(false);
+    }
+  };
+
+  const proceedToTest = async () => {
+    setIsCheckingSettings(true);
+    try {
+      const serializedConfig = JSON.stringify({
+        mode: 'customizable',
+        duration: null,
+        isMock: isMock,
+        noTimer: true,
+        timerEndTime: null,
         task1: { text: task1Text, images: task1Images },
-        task2: { text: task2Text, images: task2Images },
-        isMock
-      }),
-      mode: 'customizable',
-      noTimer: true
-    }));
-    router.push('/test-room');
+        task2: { text: task2Text, images: task2Images }
+      });
+
+      const response = await fetch('/api/essays/draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          task_type: taskType,
+          topic_text: serializedConfig,
+          content_task1: '',
+          content_task2: '',
+          is_new: true
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Could not create writing session on server');
+      }
+
+      router.push('/test-room');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to start practice session. Please try again.');
+    } finally {
+      setIsCheckingSettings(false);
+    }
   };
 
   const handleImageUpload = (setter: React.Dispatch<React.SetStateAction<string[]>>) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,6 +116,17 @@ export default function CustomizableTestSetup() {
           <div>
             <h1 className="text-lg font-medium text-white uppercase tracking-wider">Custom Practice Setup</h1>
             <p className="text-xs text-[#8a8a8e] uppercase tracking-wider mt-0.5">Untimed writing practice session</p>
+          </div>
+        </div>
+
+        {/* Orange Classroom Reminder Banner */}
+        <div className="p-4 bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded-xl flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+          <div className="space-y-0.5">
+            <h4 className="text-xs uppercase tracking-wider font-extrabold text-amber-500">Classroom Writing Only</h4>
+            <p className="text-xs leading-relaxed text-[#f5f5f7]/80">
+              Please write all essays only during class! Do not complete practice assignments from home without direct teacher instruction.
+            </p>
           </div>
         </div>
 
@@ -197,12 +256,17 @@ export default function CustomizableTestSetup() {
             <button onClick={() => router.back()} className="px-4 py-2 border border-[#1f1f23] text-[#8a8a8e] hover:text-white hover:bg-black font-semibold text-xs uppercase tracking-wider rounded-full cursor-pointer transition-colors">
               Cancel
             </button>
-            <button onClick={handleStart} className="px-5 py-2.5 bg-white hover:bg-[#cfcfcf] text-black font-semibold text-xs uppercase tracking-wider rounded-full transition-colors flex items-center justify-center gap-1.5 cursor-pointer">
-              Start Practice <ArrowRight className="w-3.5 h-3.5" />
+            <button 
+              onClick={handleStart} 
+              disabled={isCheckingSettings}
+              className="px-5 py-2.5 bg-white hover:bg-[#cfcfcf] text-black font-semibold text-xs uppercase tracking-wider rounded-full transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+            >
+              {isCheckingSettings ? 'Configuring...' : 'Start Practice'} <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
       </div>
+      <AccessCodeModal isOpen={showCodeModal} onClose={() => setShowCodeModal(false)} onSuccess={proceedToTest} />
     </Navbar>
   );
 }

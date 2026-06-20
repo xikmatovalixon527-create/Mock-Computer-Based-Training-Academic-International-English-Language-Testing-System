@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { FileText, Search, RefreshCw, AlertCircle, Trash2, Users, Edit2 } from 'lucide-react';
+import { FileText, Search, RefreshCw, AlertCircle, Trash2, Users, Edit2, Settings, Key, ShieldAlert, Sparkles, Trophy } from 'lucide-react';
 import { format } from 'date-fns';
 import { Essay } from '@/types';
 import { Navbar } from '@/components/navbar';
+import { Leaderboard } from '@/components/leaderboard';
 import { toast } from 'sonner';
 import { getBandBadgeStyle, STUDENT_GROUPS } from '@/lib/utils';
 
@@ -26,12 +27,20 @@ export default function TeacherDashboard() {
   const [mockFilter, setMockFilter] = useState<'all' | 'mock' | 'practice'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [user, setUser] = useState<{ fullName: string } | null>(null);
-  const [viewTab, setViewTab] = useState<'submissions' | 'students'>('submissions');
+  const [viewTab, setViewTab] = useState<'submissions' | 'students' | 'control_panel'>('submissions');
   const [selectedGroup, setSelectedGroup] = useState<string>('all');
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [editName, setEditName] = useState('');
   const [editGroup, setEditGroup] = useState('');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  // Platform session & cleanup control states
+  const [testsEnabled, setTestsEnabled] = useState(true);
+  const [accessCode, setAccessCode] = useState<string | null>(null);
+  const [codeExpiresAt, setCodeExpiresAt] = useState<string | null>(null);
+  const [isUpdatingSettings, setIsUpdatingSettings] = useState(false);
+  const [isCleaningData, setIsCleaningData] = useState(false);
+  const [showCleanupModal, setShowCleanupModal] = useState(false);
 
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -61,13 +70,28 @@ export default function TeacherDashboard() {
     return data.students || [];
   };
 
-  const handleSyncData = async () => {
+  const fetchSettingsData = async () => {
+    try {
+      const res = await fetch('/api/settings');
+      if (res.ok) {
+        const data = await res.json();
+        setTestsEnabled(data.tests_enabled);
+        setAccessCode(data.access_code);
+        setCodeExpiresAt(data.code_expires_at);
+      }
+    } catch (err) {
+      console.error('Settings fetch failed', err);
+    }
+  };
+
+  const handleSyncData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
       const [essaysList, studentsList] = await Promise.all([
         fetchEssaysData(),
-        fetchStudentsData()
+        fetchStudentsData(),
+        fetchSettingsData()
       ]);
       setEssays(essaysList);
       setStudents(studentsList);
@@ -78,7 +102,9 @@ export default function TeacherDashboard() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  const [timeLeftStr, setTimeLeftStr] = useState('');
 
   useEffect(() => {
     handleSyncData();
@@ -86,7 +112,31 @@ export default function TeacherDashboard() {
       .then(res => res.json())
       .then(data => { if (data.user) setUser(data.user); })
       .catch(() => {});
-  }, []);
+  }, [handleSyncData]);
+
+  useEffect(() => {
+    if (!codeExpiresAt) {
+      setTimeLeftStr('');
+      return;
+    }
+    const updateCountdown = () => {
+      const now = new Date();
+      const expires = new Date(codeExpiresAt);
+      const diff = expires.getTime() - now.getTime();
+      if (diff <= 0) {
+        setTimeLeftStr('Expired');
+        setAccessCode(null);
+      } else {
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        setTimeLeftStr(`${hours}h ${minutes}m ${seconds}s left`);
+      }
+    };
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [codeExpiresAt]);
 
   const openDeleteEssayConfirm = (essayId: string) => {
     setConfirmModal({
@@ -148,6 +198,78 @@ export default function TeacherDashboard() {
       toast.error(err.message || 'Error occurred');
     } finally {
       setIsSavingEdit(false);
+    }
+  };
+
+  const handleToggleGlobalTesting = async (enabled: boolean) => {
+    setIsUpdatingSettings(true);
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tests_enabled: enabled })
+      });
+      if (!res.ok) throw new Error('Settings write failure');
+      toast.success(enabled ? 'Global test taking active' : 'Global test taking disabled');
+      await fetchSettingsData();
+    } catch {
+      toast.error('Failed to change global testing requirements');
+    } finally {
+      setIsUpdatingSettings(false);
+    }
+  };
+
+  const handleGenerateCode = async () => {
+    setIsUpdatingSettings(true);
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ generate_code: true })
+      });
+      if (!res.ok) throw new Error('Generation failure');
+      toast.success('Active lesson access code refreshed');
+      await fetchSettingsData();
+    } catch {
+      toast.error('Failed to generate session code');
+    } finally {
+      setIsUpdatingSettings(false);
+    }
+  };
+
+  const handleRevokeCode = async () => {
+    setIsUpdatingSettings(true);
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ revoke_code: true })
+      });
+      if (!res.ok) throw new Error('Revocation failure');
+      toast.success('Active lesson code cleared');
+      await fetchSettingsData();
+    } catch {
+      toast.error('Failed to clear session code');
+    } finally {
+      setIsUpdatingSettings(false);
+    }
+  };
+
+  const handleDeepCleanup = async () => {
+    setIsCleaningData(true);
+    try {
+      const res = await fetch('/api/admin/cleanup', {
+        method: 'POST'
+      });
+      if (!res.ok) throw new Error('Cleanup api returned error state');
+      const data = await res.json();
+      toast.success(data.message || 'Database successfully wiped of practice essays!');
+      await handleSyncData();
+    } catch (err: any) {
+      toast.error('Deep cleanup action failed');
+    } finally {
+      setIsCleaningData(false);
+      setShowCleanupModal(false);
     }
   };
 
@@ -233,6 +355,13 @@ export default function TeacherDashboard() {
           >
             <Users className="w-4 h-4" />
             <span>Students ({students.length})</span>
+          </button>
+          <button 
+            onClick={() => setViewTab('control_panel')} 
+            className={`flex items-center space-x-2 py-2 px-4 text-xs font-semibold tracking-wider rounded-md cursor-pointer transition-all ${viewTab === 'control_panel' ? 'bg-[#121214] text-[#0071e3]' : 'text-[#8a8a8e] hover:text-white'}`}
+          >
+            <Settings className="w-4 h-4" />
+            <span>Control Panel</span>
           </button>
         </div>
 
@@ -418,6 +547,175 @@ export default function TeacherDashboard() {
                   </table>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {viewTab === 'control_panel' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Card 1: Session Controls & Access Codes */}
+              <div className="bg-[#121214] border border-[#1f1f23] rounded-xl p-6 space-y-5">
+                <div className="flex justify-between items-start">
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#0071e3] block">Safety & Monitoring</span>
+                    <h2 className="text-base font-semibold text-white">Lesson Testing Session</h2>
+                  </div>
+                  <div className="flex items-center gap-2 bg-black/40 border border-[#1f1f23] px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider text-[#8a8a8e]">
+                    <ShieldAlert className="w-3.5 h-3.5 text-[#ff9f0a]" />
+                    <span>Anti-Cheat Active</span>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {/* Global TestTaking Toggle */}
+                  <div className="flex items-center justify-between p-4 bg-black/20 border border-[#1f1f23] rounded-xl">
+                    <div className="space-y-0.5">
+                      <p className="text-xs font-semibold text-white uppercase tracking-wider">Authorize Writing Submissions</p>
+                      <p className="text-[10px] text-[#8a8a8e] leading-relaxed max-w-[200px]">Allow students to view and submit writing tests.</p>
+                    </div>
+                    
+                    <button
+                      onClick={() => handleToggleGlobalTesting(!testsEnabled)}
+                      disabled={isUpdatingSettings}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 ${
+                        testsEnabled ? 'bg-[#30d158]' : 'bg-[#1f1f23]'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                          testsEnabled ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Access Code Settings Generator */}
+                  <div className="p-4 bg-black/40 border border-[#1f1f23] rounded-xl space-y-4">
+                    <div className="flex justify-between items-center pb-2 border-b border-[#1f1f23]/60">
+                      <div>
+                        <p className="text-xs font-semibold text-white uppercase tracking-wider">Lesson Access Code</p>
+                        <p className="text-[10px] text-[#8a8a8e] leading-relaxed">Students must enter this code to enter test room.</p>
+                      </div>
+                      <Key className="w-4 h-4 text-[#8a8a8e]" />
+                    </div>
+
+                    {accessCode ? (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="p-3 bg-black border border-[#1f1f23] rounded-lg tracking-widest text-center font-mono text-xl font-extrabold text-[#30d158] flex-1 mr-4">
+                            {accessCode}
+                          </div>
+                          <div className="text-right space-y-1 shrink-0">
+                            <span className="block text-[8px] font-mono uppercase font-bold tracking-widest text-[#8a8a8e]">Validity Remaining</span>
+                            <span className="block text-xs font-mono font-bold text-[#ff9f0a]">{timeLeftStr || 'Calculating...'}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleGenerateCode}
+                            disabled={isUpdatingSettings}
+                            className="flex-1 py-1.5 border border-[#1f1f23] text-white hover:bg-[#121214] rounded-lg text-[9px] uppercase tracking-widest font-bold font-mono cursor-pointer transition-all disabled:opacity-50"
+                          >
+                            Regenerate Code
+                          </button>
+                          <button
+                            onClick={handleRevokeCode}
+                            disabled={isUpdatingSettings}
+                            className="py-1.5 px-3 bg-[#ff453a]/15 text-[#ff453a] border border-[#ff453a]/25 hover:bg-[#ff453a]/20 hover:text-white rounded-lg text-[9px] uppercase tracking-widest font-bold font-mono cursor-pointer transition-all disabled:opacity-50"
+                          >
+                            Revoke
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="p-4 bg-black border border-[#1f1f23] rounded-lg text-center">
+                          <p className="text-[10px] font-bold text-[#8a8a8e] uppercase tracking-wider">No Active Session Code</p>
+                          <p className="text-[9px] text-[#6e6e73] mt-1 leading-relaxed">If no code is generated, students may launch configurations unprompted.</p>
+                        </div>
+                        <button
+                          onClick={handleGenerateCode}
+                          disabled={isUpdatingSettings}
+                          className="w-full py-2 bg-white text-black hover:bg-[#cfcfcf] rounded-full text-[10px] uppercase tracking-widest font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" /> Force Generate Code
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 2: Administrative Reset & Practice Wiping */}
+              <div className="bg-[#121214] border border-[#1f1f23] rounded-xl p-6 flex flex-col justify-between space-y-5">
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#ff453a] block">Administrative Reset</span>
+                    <h2 className="text-base font-semibold text-white">Platform System Cleanup</h2>
+                  </div>
+                  <p className="text-xs text-[#8a8a8e] leading-relaxed">
+                    Erase all client-submitted documents, mock folders, essays, drafts, teacher evaluation notes, comments, and banding reports. This performs a deep sweep of practice logs to clean the platform to its default, baseline initial condition. All user accounts (both student credentials and instructor credentials) will remain fully intact.
+                  </p>
+                </div>
+
+                <div className="p-4 bg-red-500/5 border border-red-500/10 rounded-xl space-y-3">
+                  <div className="flex items-start gap-2 text-xs text-red-500 font-medium">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>This operation is completely irreversible and wipes all historical records.</span>
+                  </div>
+                  <button
+                    onClick={() => setShowCleanupModal(true)}
+                    className="w-full py-2.5 bg-[#ff453a] hover:bg-[#ff453a]/80 text-white font-bold text-[10px] uppercase tracking-widest rounded-full cursor-pointer transition-colors"
+                  >
+                    Clear Platform Practice Data
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Leaderboard Summary inside Instructor Control Panel */}
+            <div className="bg-[#121214] border border-[#1f1f23] rounded-xl p-6">
+              <div className="flex items-center gap-2 mb-4 pb-2 border-b border-[#1f1f23]">
+                <Trophy className="w-4 h-4 text-[#ff9f0a]" />
+                <h3 className="text-xs uppercase tracking-wider font-bold text-white">Live Student Leaderboard</h3>
+              </div>
+              <div className="max-w-4xl">
+                <Leaderboard />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showCleanupModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-md animate-fade-in">
+            <div className="w-full max-w-sm bg-[#121214] border border-[#ff453a]/30 rounded-xl p-6 space-y-5 shadow-none text-center">
+              <div className="w-12 h-12 rounded-full bg-[#ff453a]/10 border border-[#ff453a]/20 flex items-center justify-center text-[#ff453a] mx-auto animate-pulse">
+                <ShieldAlert className="w-6 h-6" />
+              </div>
+              <div className="space-y-1.5">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-white">Confirm Deep Cleanup?</h3>
+                <p className="text-xs text-[#8a8a8e] leading-relaxed">
+                  Are you entirely sure you want to permanently delete all submitted essays, drafts, evaluation ratings, and teacher feedback comments on this platform? All client and student accounts will be kept untouched.
+                </p>
+              </div>
+              <div className="space-y-2 pt-2">
+                <button
+                  onClick={handleDeepCleanup}
+                  disabled={isCleaningData}
+                  className="w-full py-2.5 bg-[#ff453a] hover:bg-[#ff453a]/80 text-white rounded-full text-xs font-bold uppercase tracking-widest cursor-pointer disabled:opacity-50"
+                >
+                  {isCleaningData ? 'Wiping Platform...' : 'Yes, Permanently Clear All'}
+                </button>
+                <button
+                  onClick={() => setShowCleanupModal(false)}
+                  disabled={isCleaningData}
+                  className="w-full py-2 border border-[#1f1f23] text-[#8a8a8e] hover:text-white rounded-full text-xs font-bold uppercase tracking-widest cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         )}

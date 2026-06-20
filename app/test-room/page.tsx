@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { formatTime, countWords } from '@/lib/utils';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, RefreshCw } from 'lucide-react';
 
 interface TestConfig { 
   taskType: string; 
@@ -27,6 +27,7 @@ export default function ExamRoom() {
   const [showPrompt, setShowPrompt] = useState(true); 
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isLoadingSession, setIsLoadingSession] = useState(true);
   
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const textsRef = useRef(texts);
@@ -34,6 +35,82 @@ export default function ExamRoom() {
 
   useEffect(() => { textsRef.current = texts; }, [texts]);
   useEffect(() => { configRef.current = config; }, [config]);
+
+  // Load the ongoing test session / config from the database on mount
+  useEffect(() => {
+    let active = true;
+    async function fetchActiveDraft() {
+      try {
+        const res = await fetch('/api/essays/draft');
+        if (!res.ok) {
+          throw new Error('Failed to load session');
+        }
+        const data = await res.json();
+        if (!active) return;
+
+        if (!data.draft) {
+          toast.error('No active mock or practice exam session was found.');
+          router.push('/student/dashboard');
+          return;
+        }
+
+        const draft = data.draft;
+        let parsedConfig: any = {};
+        try {
+          parsedConfig = JSON.parse(draft.topic_text);
+        } catch {
+          parsedConfig = {
+            mode: 'original',
+            duration: draft.task_type === 'task1' ? 20 : draft.task_type === 'task2' ? 40 : 60,
+            isMock: false,
+            noTimer: false,
+            timerEndTime: null,
+            task1: { text: draft.topic_text, images: [] },
+            task2: { text: draft.topic_text, images: [] }
+          };
+        }
+
+        const cfgObject: TestConfig = {
+          taskType: draft.task_type,
+          topicText: draft.topic_text,
+          mode: parsedConfig.mode || 'original',
+          noTimer: parsedConfig.noTimer || false,
+          isMock: parsedConfig.isMock || false,
+          duration: parsedConfig.duration
+        };
+
+        setConfig(cfgObject);
+        setTexts([draft.content_task1 || '', draft.content_task2 || '']);
+        
+        // Setup prompts
+        setTopicData({
+          task1: parsedConfig.task1 || { text: draft.topic_text, images: [] },
+          task2: parsedConfig.task2 || { text: draft.topic_text, images: [] }
+        });
+
+        if (draft.task_type === 'task2') {
+          setActiveTab(1);
+        }
+
+        // Setup ticking database timer
+        if (!parsedConfig.noTimer && parsedConfig.timerEndTime) {
+          const endTime = parsedConfig.timerEndTime;
+          const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+          setTimeLeft(remaining);
+        }
+
+        setIsLoadingSession(false);
+      } catch (err) {
+        if (active) {
+          toast.error('Failed to sync active practice session with server');
+          router.push('/student/dashboard');
+        }
+      }
+    }
+
+    fetchActiveDraft();
+    return () => { active = false; };
+  }, [router]);
 
   const handleForceSubmit = useCallback(async () => {
     setIsSubmitting(true);
@@ -59,14 +136,6 @@ export default function ExamRoom() {
       if (!res.ok) throw new Error('Submission failed');
       toast.dismiss(); 
       toast.success('Exam session uploaded successfully!');
-      sessionStorage.removeItem('ielts_test_config');
-      localStorage.removeItem('ielts_test_config_backup');
-      localStorage.removeItem(`ielts_draft_${cfg?.taskType}`);
-      
-      // Очищаем время окончания таймера
-      if (cfg?.taskType) {
-        localStorage.removeItem(`ielts_timer_end_${cfg.taskType}`);
-      }
       
       router.push('/student/dashboard');
     } catch {
@@ -76,70 +145,67 @@ export default function ExamRoom() {
     }
   }, [router]);
 
+  // Handle countdown timer decrement loop
   useEffect(() => {
-    let saved = sessionStorage.getItem('ielts_test_config') || localStorage.getItem('ielts_test_config_backup');
-    if (!saved) { router.push('/student/dashboard'); return; }
-    localStorage.setItem('ielts_test_config_backup', saved);
-    const parsed: TestConfig = JSON.parse(saved);
-    setConfig(parsed);
-    try { 
-      setTopicData(JSON.parse(parsed.topicText)); 
-    } catch { 
-      setTopicData({ task1: { text: parsed.topicText }, task2: { text: parsed.topicText } }); 
-    }
-    if (parsed.taskType === 'task2') setActiveTab(1);
-    
-    // Постоянный таймер, устойчивый к перезагрузкам
-    if (!parsed.noTimer) {
-      const durationMinutes = parsed.duration || (parsed.taskType === 'task1' ? 20 : parsed.taskType === 'task2' ? 40 : 60);
-      const timerKey = `ielts_timer_end_${parsed.taskType}`;
-      const savedEndTime = localStorage.getItem(timerKey);
-      
-      let endTime: number;
-      if (savedEndTime) {
-        endTime = parseInt(savedEndTime, 10);
-        const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
-        setTimeLeft(remaining);
-      } else {
-        endTime = Date.now() + (durationMinutes * 60 * 1000);
-        localStorage.setItem(timerKey, endTime.toString());
-        setTimeLeft(durationMinutes * 60);
+    if (isLoadingSession || !config || config.noTimer || timeLeft <= 0) { 
+      if (timeLeft <= 0 && config && !config.noTimer && !isLoadingSession) {
+        handleForceSubmit();
       }
+      return; 
     }
+    timerRef.current = setTimeout(() => setTimeLeft(p => p - 1), 1000);
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, [timeLeft, config, handleForceSubmit, isLoadingSession]);
 
-    const draftStr = localStorage.getItem(`ielts_draft_${parsed.taskType}`);
-    if (draftStr) {
+  // Auto-save typing changes back to the database draft row seamlessly
+  useEffect(() => {
+    if (isLoadingSession || !config) return;
+
+    const delayDebounceFn = setTimeout(async () => {
       try {
-        const draft = JSON.parse(draftStr);
-        if (draft.texts) setTexts(draft.texts);
-      } catch {}
-    }
+        await fetch('/api/essays/draft', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            task_type: config.taskType,
+            topic_text: config.topicText,
+            content_task1: texts[0],
+            content_task2: texts[1]
+          })
+        });
+      } catch (err) {
+        console.error('Failed to auto-sync writing drafts with db:', err);
+      }
+    }, 1500);
 
+    return () => clearTimeout(delayDebounceFn);
+  }, [texts, config, isLoadingSession]);
+
+  useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => { 
       window.removeEventListener('beforeunload', handleBeforeUnload); 
       if (timerRef.current) clearTimeout(timerRef.current); 
     };
-  }, [router]);
-
-  useEffect(() => {
-    if (!config || config.noTimer || timeLeft <= 0) { 
-      if (timeLeft <= 0 && config && !config.noTimer) handleForceSubmit(); 
-      return; 
-    }
-    timerRef.current = setTimeout(() => setTimeLeft(p => p - 1), 1000);
-    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
-  }, [timeLeft, config, handleForceSubmit]);
+  }, []);
 
   const handleTextChange = (val: string) => {
     setTexts(prev => {
       const next = [...prev]; 
       next[activeTab] = val;
-      if (config?.taskType) localStorage.setItem(`ielts_draft_${config.taskType}`, JSON.stringify({ texts: next }));
       return next;
     });
   };
+
+  if (isLoadingSession) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col justify-center items-center gap-2">
+        <RefreshCw className="w-8 h-8 text-[#0071e3] animate-spin" />
+        <p className="text-xs text-[#8a8a8e] uppercase tracking-wider font-mono">Syncing exam session with secure server...</p>
+      </div>
+    );
+  }
 
   if (!config || !topicData) return <div className="min-h-screen bg-black" />;
 
@@ -165,7 +231,7 @@ export default function ExamRoom() {
       </header>
       
       <main className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
-        {/* Левая колонка с заданием и картинкой */}
+        {/* Left column – Prompt and image */}
         <div className={`w-full lg:w-1/2 flex flex-col bg-[#121214]/50 lg:border-r border-[#1f1f23] ${showPrompt ? 'h-[45vh] lg:h-auto' : ''}`}>
           <div className="px-4 py-3 bg-[#121214] flex justify-between cursor-pointer shrink-0" onClick={() => { if (window.innerWidth < 1024) setShowPrompt(!showPrompt); }}>
             <span className="text-[10px] font-bold uppercase tracking-wider text-[#8a8a8e]">Prompt Instructions</span>
@@ -204,7 +270,7 @@ export default function ExamRoom() {
           )}
         </div>
         
-        {/* Правая колонка с вводом текста */}
+        {/* Right column – Text input area */}
         <div className="w-full lg:w-1/2 flex flex-col min-h-0 flex-1 relative bg-black">
           <textarea 
             className="flex-1 w-full p-6 sm:p-8 text-lg bg-transparent resize-none focus:outline-none text-white font-sans leading-relaxed selection:bg-[#0071e3]/20" 
@@ -222,7 +288,7 @@ export default function ExamRoom() {
       
       <footer className="shrink-0 border-t border-[#1f1f23] bg-[#121214] px-6 h-16 flex items-center justify-between">
         <span className="text-xs uppercase font-bold tracking-widest text-[#8a8a8e]">IELTS Academic Module Practice</span>
-        <button onClick={() => setIsConfirmOpen(true)} disabled={isSubmitting} className="bg-white hover:bg-[#cfcfcf] text-black px-5 py-2 text-xs font-bold uppercase tracking-wider rounded-full cursor-pointer transition-colors">Submit Evaluation</button>
+        <button onClick={() => setIsConfirmOpen(true)} disabled={isSubmitting} className="bg-white hover:bg-[#cfcfcf] text-black px-5 py-2 text-xs font-bold uppercase tracking-wider rounded-full cursor-pointer transition-colors max-md:py-1 max-md:px-3">Submit Evaluation</button>
       </footer>
       
       {lightboxImg && (

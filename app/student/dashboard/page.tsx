@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { FileText, Clock, Award, ArrowRight, RefreshCw, BookOpen, Settings2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Navbar } from '@/components/navbar';
+import { Leaderboard } from '@/components/leaderboard';
 import { Essay } from '@/types';
 import { getBandBadgeStyle, getBandTextColor } from '@/lib/utils';
 
@@ -122,89 +123,95 @@ export default function StudentDashboard() {
           </div>
         </div>
 
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-medium uppercase tracking-wider text-neutral-300">Practice Log</h2>
-              <p className="text-xs text-[#8a8a8e]">Chronological overview of submitted writings and evaluations</p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+          <div className="lg:col-span-2 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-medium uppercase tracking-wider text-neutral-300">Practice Log</h2>
+                <p className="text-xs text-[#8a8a8e]">Chronological overview of submitted writings and evaluations</p>
+              </div>
+              {essays.length > 0 && (
+                <button 
+                  onClick={fetchData} 
+                  className="px-3.5 py-1.5 bg-[#121214] hover:bg-black border border-[#1f1f23] rounded-full text-xs font-medium text-[#f5f5f7] transition-colors cursor-pointer flex items-center gap-1.5"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  Refresh
+                </button>
+              )}
             </div>
-            {essays.length > 0 && (
-              <button 
-                onClick={fetchData} 
-                className="px-3.5 py-1.5 bg-[#121214] hover:bg-black border border-[#1f1f23] rounded-full text-xs font-medium text-[#f5f5f7] transition-colors cursor-pointer flex items-center gap-1.5"
-              >
-                <RefreshCw className="w-3 h-3" />
-                Refresh
-              </button>
-            )}
-          </div>
 
-          <div className="bg-[#121214]/50 border border-[#1f1f23] rounded-xl overflow-hidden">
-            {isLoading ? (
-              <div className="p-16 text-center">
-                <RefreshCw className="w-6 h-6 animate-spin mx-auto text-[#0071e3] mb-3" />
-                <p className="text-xs text-[#8a8a8e]">Retrieving test submissions...</p>
-              </div>
-            ) : essays.length === 0 ? (
-              <div className="p-16 text-center">
-                <FileText className="w-10 h-10 mx-auto text-[#374151] mb-3" />
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-white mb-1">No submissions logged</h3>
-                <p className="text-xs text-[#8a8a8e]">Launch a task module using standard or custom configurations above to start.</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-[#1f1f23]">
-                {essays.map(essay => (
-                  <div key={essay.id} className="p-5 hover:bg-[#121214]/40 transition-colors">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div className="flex-1 min-w-0 space-y-1.5">
-                        <div className="flex flex-wrap items-center gap-2.5">
-                          <span className="px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider border border-[#0071e3]/20 bg-[#0071e3]/10 text-[#2997ff] rounded-full">
-                            {essay.task_type === 'task1' ? 'Task 1 (Report)' : essay.task_type === 'task2' ? 'Task 2 (Essay)' : 'Composite Session'}
-                          </span>
-                          <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${getIsMock(essay.topic_text) ? 'bg-[#bf5af2]/15 text-[#bf5af2] border border-[#bf5af2]/30' : 'bg-[#30d158]/15 text-[#30d158] border border-[#30d158]/30'}`}>
-                            {getIsMock(essay.topic_text) ? 'Mock' : 'Practice'}
-                          </span>
-                          <span className="text-xs text-[#6e6e73]">
-                            {format(new Date(essay.created_at), 'MMMM dd, yyyy · hh:mm a')}
-                          </span>
+            <div className="bg-[#121214]/50 border border-[#1f1f23] rounded-xl overflow-hidden">
+              {isLoading ? (
+                <div className="p-16 text-center">
+                  <RefreshCw className="w-6 h-6 animate-spin mx-auto text-[#0071e3] mb-3" />
+                  <p className="text-xs text-[#8a8a8e]">Retrieving test submissions...</p>
+                </div>
+              ) : essays.length === 0 ? (
+                <div className="p-16 text-center">
+                  <FileText className="w-10 h-10 mx-auto text-[#374151] mb-3" />
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-white mb-1">No submissions logged</h3>
+                  <p className="text-xs text-[#8a8a8e]">Launch a task module using standard or custom configurations above to start.</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-[#1f1f23]">
+                  {essays.map(essay => (
+                    <div key={essay.id} className="p-5 hover:bg-[#121214]/40 transition-colors">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="flex-1 min-w-0 space-y-1.5">
+                          <div className="flex flex-wrap items-center gap-2.5">
+                            <span className="px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider border border-[#0071e3]/20 bg-[#0071e3]/10 text-[#2997ff] rounded-full">
+                              {essay.task_type === 'task1' ? 'Task 1 (Report)' : essay.task_type === 'task2' ? 'Task 2 (Essay)' : 'Composite Session'}
+                            </span>
+                            <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${getIsMock(essay.topic_text) ? 'bg-[#bf5af2]/15 text-[#bf5af2] border border-[#bf5af2]/30' : 'bg-[#30d158]/15 text-[#30d158] border border-[#30d158]/30'}`}>
+                              {getIsMock(essay.topic_text) ? 'Mock' : 'Practice'}
+                            </span>
+                            <span className="text-xs text-[#6e6e73]">
+                              {format(new Date(essay.created_at), 'MMMM dd, yyyy · hh:mm a')}
+                            </span>
+                          </div>
+                          <p className="text-sm text-[#f5f5f7] leading-relaxed line-clamp-2">
+                            &ldquo;{getTopicText(essay.topic_text)}&rdquo;
+                          </p>
                         </div>
-                        <p className="text-sm text-[#f5f5f7] leading-relaxed line-clamp-2">
-                          &ldquo;{getTopicText(essay.topic_text)}&rdquo;
-                        </p>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-3 shrink-0 justify-between md:justify-end">
-                        {essay.status === 'reviewed' ? (
-                          <>
-                            <span className={`text-[10px] font-bold tracking-wider uppercase px-3 py-1 rounded-full border ${getBandBadgeStyle(essay.overall_band)}`}>
-                              {essay.overall_band != null && Number(essay.overall_band) > 0 ? `Band ${Number(essay.overall_band).toFixed(1)}` : 'Feedback only'}
-                            </span>
-                            <Link
-                              href={`/student/review/${essay.id}`}
-                              className="px-4 py-2 text-xs font-semibold text-black bg-[#f5f5f7] hover:bg-[#cfcfcf] rounded-full transition-colors flex items-center gap-1 cursor-pointer"
-                            >
-                              Review <ArrowRight className="w-3.5 h-3.5" />
-                            </Link>
-                          </>
-                        ) : (
-                          <>
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] uppercase tracking-wider font-bold bg-[#ff9f0a]/10 text-[#ff9f0a] border border-[#ff9f0a]/20">
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#ff9f0a]" />
-                              Awaiting Marking
-                            </span>
-                            <Link
-                              href={`/student/review/${essay.id}`}
-                              className="px-4 py-2 text-xs font-semibold text-neutral-400 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-full transition-colors flex items-center gap-1 cursor-pointer"
-                            >
-                              View Writing <ArrowRight className="w-3.5 h-3.5" />
-                            </Link>
-                          </>
-                        )}
+                        <div className="flex flex-wrap items-center gap-3 shrink-0 justify-between md:justify-end">
+                          {essay.status === 'reviewed' ? (
+                            <>
+                              <span className={`text-[10px] font-bold tracking-wider uppercase px-3 py-1 rounded-full border ${getBandBadgeStyle(essay.overall_band)}`}>
+                                {essay.overall_band != null && Number(essay.overall_band) > 0 ? `Band ${Number(essay.overall_band).toFixed(1)}` : 'Feedback only'}
+                              </span>
+                              <Link
+                                href={`/student/review/${essay.id}`}
+                                className="px-4 py-2 text-xs font-semibold text-black bg-[#f5f5f7] hover:bg-[#cfcfcf] rounded-full transition-colors flex items-center gap-1 cursor-pointer"
+                              >
+                                Review <ArrowRight className="w-3.5 h-3.5" />
+                              </Link>
+                            </>
+                          ) : (
+                            <>
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] uppercase tracking-wider font-bold bg-[#ff9f0a]/10 text-[#ff9f0a] border border-[#ff9f0a]/20">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#ff9f0a]" />
+                                Awaiting Marking
+                              </span>
+                              <Link
+                                href={`/student/review/${essay.id}`}
+                                className="px-4 py-2 text-xs font-semibold text-neutral-400 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-full transition-colors flex items-center gap-1 cursor-pointer"
+                              >
+                                View Writing <ArrowRight className="w-3.5 h-3.5" />
+                              </Link>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="lg:col-span-1">
+            <Leaderboard />
           </div>
         </div>
       </div>
