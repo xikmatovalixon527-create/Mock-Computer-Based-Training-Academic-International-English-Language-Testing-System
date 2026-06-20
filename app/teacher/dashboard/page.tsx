@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { FileText, Search, RefreshCw, AlertCircle, Trash2, Users, Edit2, Settings, Key, ShieldAlert, Sparkles, Trophy, User, KeyRound } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { FileText, Search, RefreshCw, AlertCircle, Trash2, Users, Edit2, Settings, ShieldAlert, Sparkles, Trophy, User, KeyRound } from 'lucide-react';
 import { format } from 'date-fns';
 import { Essay } from '@/types';
 import { Navbar } from '@/components/navbar';
@@ -20,6 +21,7 @@ interface Student {
 type ActiveTab = 'submissions' | 'students' | 'control_panel' | 'leaderboard' | 'account';
 
 export default function TeacherDashboard() {
+  const router = useRouter(); // Инициализация хука навигации Next.js
   const [activeTab, setActiveTab] = useState<ActiveTab>('submissions');
   const [essays, setEssays] = useState<Essay[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
@@ -274,13 +276,6 @@ export default function TeacherDashboard() {
     if (type === 'task1') return 'Task 1'; 
     if (type === 'task2') return 'Task 2'; 
     return 'Both'; 
-  };
-
-  const getIsMock = (topic: string) => {
-    try {
-      const p = JSON.parse(topic);
-      return p.isMock === true;
-    } catch { return false; }
   };
 
   const getEssaysCountByGroup = (groupName: string) => {
