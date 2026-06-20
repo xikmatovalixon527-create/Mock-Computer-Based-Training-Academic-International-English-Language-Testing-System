@@ -43,6 +43,16 @@ export function countWords(text: string): number {
   return text.trim().split(/\s+/).filter(word => word.length > 0).length;
 }
 
+/**
+ * Validates that the name contains exactly two words (First name and Last name),
+ * separated by a single space, using only Latin letters.
+ */
+export function validateFullName(name: string): boolean {
+  const trimmed = name.trim();
+  const latinRegex = /^[A-Za-z]+ [A-Za-z]+$/;
+  return latinRegex.test(trimmed);
+}
+
 export function getBandBadgeStyle(score: number | string | null | undefined): string {
   if (score === undefined || score === null || score === '') {
     return 'bg-[var(--color-surface)] text-[var(--color-text-tertiary)] border-[var(--color-border)] font-sans font-bold';

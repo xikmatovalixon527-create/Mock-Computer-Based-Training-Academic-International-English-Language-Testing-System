@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { BookOpen, ArrowRight, AlertCircle, GraduationCap, Users } from 'lucide-react';
-import { STUDENT_GROUPS } from '@/lib/utils';
+import { STUDENT_GROUPS, validateFullName } from '@/lib/utils';
 
 type Role = 'student' | 'teacher';
 
@@ -21,16 +21,44 @@ export default function RegisterPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
-    if (role === 'student' && !groupName) {
-      setError('Please select your group assignment');
+
+    const trimmedName = fullName.trim();
+
+    // 1. Client-side strict validation for Latin formatting
+    if (!validateFullName(trimmedName)) {
+      setError('Full name must consist of exactly two words containing only Latin letters (e.g., "John Doe"). No middle names, digits, or cyrillic characters allowed.');
       setLoading(false);
       return;
     }
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      setLoading(false);
+      return;
+    }
+
+    if (password.toLowerCase() === trimmedName.toLowerCase()) {
+      setError('Password cannot be identical to your name.');
+      setLoading(false);
+      return;
+    }
+
+    if (role === 'student' && !groupName) {
+      setError('Please select your class group assignment.');
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fullName, password, role, groupName: role === 'student' ? groupName : undefined }),
+        body: JSON.stringify({ 
+          fullName: trimmedName, 
+          password, 
+          role, 
+          groupName: role === 'student' ? groupName : undefined 
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to register account');
@@ -62,7 +90,7 @@ export default function RegisterPage() {
           {error && (
             <div className="flex items-start gap-2.5 p-3 rounded-lg bg-[#ff453a]/10 border border-[#ff453a]/20">
               <AlertCircle className="w-4 h-4 text-[#ff453a] shrink-0 mt-0.5" />
-              <span className="text-xs text-[#ff453a] font-medium tracking-normal">{error}</span>
+              <span className="text-xs text-[#ff453a] font-medium tracking-normal leading-relaxed">{error}</span>
             </div>
           )}
 
@@ -103,14 +131,14 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-xs font-medium text-[#8a8a8e]">Full Name</label>
+              <label className="block text-xs font-medium text-[#8a8a8e]">Full Name (First Last)</label>
               <input
                 type="text"
                 required
                 value={fullName}
                 onChange={e => setFullName(e.target.value)}
                 className="w-full h-10 px-3 bg-black border border-[#1f1f23] rounded-md text-sm text-white placeholder-[#6e6e73] focus:outline-none focus:border-[#0071e3] transition-colors"
-                placeholder="Enter your full name"
+                placeholder="e.g. John Doe"
                 autoComplete="name"
               />
             </div>
@@ -151,7 +179,7 @@ export default function RegisterPage() {
               disabled={loading}
               className="w-full h-10 flex items-center justify-center gap-2 bg-[#0071e3] hover:bg-[#2997ff] text-white font-medium text-sm rounded-full transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
             >
-              <span>{loading ? 'Processing...' : 'Register'}</span>
+              <span>{loading ? 'Creating Account...' : 'Register'}</span>
               {!loading && <ArrowRight className="w-4 h-4 text-white" />}
             </button>
           </form>

@@ -1,5 +1,3 @@
-// File: app/api/essays/route.ts
-
 import { requireAuth, successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
 import { getEssays, getEssayById, createEssay, deleteEssay, deleteLiveDraft } from '@/lib/queries';
 
@@ -13,9 +11,9 @@ export async function GET(request: Request) {
 
     if (id) {
       const essay = await getEssayById(id);
-      if (!essay) return errorResponse('Not found', 404);
+      if (!essay) return errorResponse('Document not found.', 404);
       if (session.role === 'student' && essay.student_id !== session.id) {
-        return errorResponse('Forbidden', 403);
+        return errorResponse('Access denied to requested student resource.', 403);
       }
       return successResponse({ essay });
     }
@@ -46,7 +44,7 @@ export async function POST(request: Request) {
     try {
       await deleteLiveDraft(session.id);
     } catch (e) {
-      console.error('Error clearing live draft:', e);
+      console.error('Error cleaning live student draft:', e);
     }
 
     return successResponse({ essay });
@@ -62,7 +60,7 @@ export async function DELETE(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-    if (!id) return errorResponse('Missing ID', 400);
+    if (!id) return errorResponse('Missing required query ID.', 400);
 
     await deleteEssay(id);
     return successResponse({ success: true });

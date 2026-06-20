@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import Link from 'next/link';
-import { FileText, Search, RefreshCw, AlertCircle, Trash2, Users, Edit2, Settings, Key, ShieldAlert, Sparkles, Trophy } from 'lucide-react';
+import { FileText, Search, RefreshCw, AlertCircle, Trash2, Users, Edit2, Settings, Key, ShieldAlert, Sparkles, Trophy, User, KeyRound } from 'lucide-react';
 import { format } from 'date-fns';
 import { Essay } from '@/types';
 import { Navbar } from '@/components/navbar';
@@ -18,7 +17,10 @@ interface Student {
   essay_count: number;
 }
 
+type ActiveTab = 'submissions' | 'students' | 'control_panel' | 'leaderboard' | 'account';
+
 export default function TeacherDashboard() {
+  const [activeTab, setActiveTab] = useState<ActiveTab>('submissions');
   const [essays, setEssays] = useState<Essay[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -26,21 +28,25 @@ export default function TeacherDashboard() {
   const [filter, setFilter] = useState<'all' | 'pending' | 'reviewed'>('all');
   const [mockFilter, setMockFilter] = useState<'all' | 'mock' | 'practice'>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [user, setUser] = useState<{ fullName: string } | null>(null);
-  const [viewTab, setViewTab] = useState<'submissions' | 'students' | 'control_panel'>('submissions');
+  const [user, setUser] = useState<{ id: string; fullName: string; role: string; createdAt?: string } | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<string>('all');
+  
+  // Student modal edit states
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
-  const [editName, setEditName] = useState('');
-  const [editGroup, setEditGroup] = useState('');
+  const [editStudentName, setEditStudentName] = useState('');
+  const [editStudentGroup, setEditStudentGroup] = useState('');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
-  // Platform session & cleanup control states
-  const [testsEnabled, setTestsEnabled] = useState(true);
+  // Platform secure lock states
   const [accessCode, setAccessCode] = useState<string | null>(null);
   const [codeExpiresAt, setCodeExpiresAt] = useState<string | null>(null);
   const [isUpdatingSettings, setIsUpdatingSettings] = useState(false);
-  const [isCleaningData, setIsCleaningData] = useState(false);
-  const [showCleanupModal, setShowCleanupModal] = useState(false);
+  const [timeLeftStr, setTimeLeftStr] = useState('');
+
+  // Account modification states
+  const [editName, setEditName] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [isUpdatingAccount, setIsUpdatingAccount] = useState(false);
 
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -75,7 +81,6 @@ export default function TeacherDashboard() {
       const res = await fetch('/api/settings');
       if (res.ok) {
         const data = await res.json();
-        setTestsEnabled(data.tests_enabled);
         setAccessCode(data.access_code);
         setCodeExpiresAt(data.code_expires_at);
       }
@@ -95,22 +100,24 @@ export default function TeacherDashboard() {
       ]);
       setEssays(essaysList);
       setStudents(studentsList);
-      toast.success('Dashboard synchronized successfully');
     } catch (err: any) {
       setError(err.message || 'Error syncing dashboard data');
-      toast.error('Failed to sync dashboard data');
+      toast.error('Failed to sync dashboard database data.');
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  const [timeLeftStr, setTimeLeftStr] = useState('');
-
   useEffect(() => {
     handleSyncData();
     fetch('/api/me')
       .then(res => res.json())
-      .then(data => { if (data.user) setUser(data.user); })
+      .then(data => {
+        if (data.user) {
+          setUser(data.user);
+          setEditName(data.user.fullName);
+        }
+      })
       .catch(() => {});
   }, [handleSyncData]);
 
@@ -137,6 +144,32 @@ export default function TeacherDashboard() {
     const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
   }, [codeExpiresAt]);
+
+  const handleUpdateAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsUpdatingAccount(true);
+    try {
+      const res = await fetch('/api/settings/account', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: editName,
+          newPassword: newPassword || undefined
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to update credentials');
+      }
+      toast.success('Account profile updated successfully');
+      setNewPassword('');
+      handleSyncData();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update credentials.');
+    } finally {
+      setIsUpdatingAccount(false);
+    }
+  };
 
   const openDeleteEssayConfirm = (essayId: string) => {
     setConfirmModal({
@@ -188,7 +221,7 @@ export default function TeacherDashboard() {
       const res = await fetch('/api/students', { 
         method: 'PUT', 
         headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ id: editingStudent.id, fullName: editName, groupName: editGroup }) 
+        body: JSON.stringify({ id: editingStudent.id, fullName: editStudentName, groupName: editStudentGroup }) 
       });
       if (!res.ok) throw new Error('Failed to update student settings');
       toast.success('Student profile updated');
@@ -201,24 +234,6 @@ export default function TeacherDashboard() {
     }
   };
 
-  const handleToggleGlobalTesting = async (enabled: boolean) => {
-    setIsUpdatingSettings(true);
-    try {
-      const res = await fetch('/api/settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tests_enabled: enabled })
-      });
-      if (!res.ok) throw new Error('Settings write failure');
-      toast.success(enabled ? 'Global test taking active' : 'Global test taking disabled');
-      await fetchSettingsData();
-    } catch {
-      toast.error('Failed to change global testing requirements');
-    } finally {
-      setIsUpdatingSettings(false);
-    }
-  };
-
   const handleGenerateCode = async () => {
     setIsUpdatingSettings(true);
     try {
@@ -228,7 +243,7 @@ export default function TeacherDashboard() {
         body: JSON.stringify({ generate_code: true })
       });
       if (!res.ok) throw new Error('Generation failure');
-      toast.success('Active lesson access code refreshed');
+      toast.success('Active lesson access code generated');
       await fetchSettingsData();
     } catch {
       toast.error('Failed to generate session code');
@@ -252,24 +267,6 @@ export default function TeacherDashboard() {
       toast.error('Failed to clear session code');
     } finally {
       setIsUpdatingSettings(false);
-    }
-  };
-
-  const handleDeepCleanup = async () => {
-    setIsCleaningData(true);
-    try {
-      const res = await fetch('/api/admin/cleanup', {
-        method: 'POST'
-      });
-      if (!res.ok) throw new Error('Cleanup api returned error state');
-      const data = await res.json();
-      toast.success(data.message || 'Database successfully wiped of practice essays!');
-      await handleSyncData();
-    } catch (err: any) {
-      toast.error('Deep cleanup action failed');
-    } finally {
-      setIsCleaningData(false);
-      setShowCleanupModal(false);
     }
   };
 
@@ -324,7 +321,7 @@ export default function TeacherDashboard() {
   return (
     <Navbar>
       <div className="space-y-6 max-w-7xl mx-auto relative">
-        <div className="luxury-grid-overlay" />
+        <div className="luxury-grid-overlay opacity-30" />
         
         <div className="p-6 bg-[#121214] border border-[#1f1f23] rounded-xl flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="space-y-1">
@@ -341,61 +338,79 @@ export default function TeacherDashboard() {
           </button>
         </div>
 
+        {/* Console Workspace Navigation Tabs */}
         <div className="flex flex-wrap border-b border-[#1f1f23] gap-1 bg-black/40 p-1 rounded-lg">
           <button 
-            onClick={() => setViewTab('submissions')} 
-            className={`flex items-center space-x-2 py-2 px-4 text-xs font-semibold tracking-wider rounded-md cursor-pointer transition-all ${viewTab === 'submissions' ? 'bg-[#121214] text-[#0071e3]' : 'text-[#8a8a8e] hover:text-white'}`}
+            onClick={() => setActiveTab('submissions')} 
+            className={`flex items-center space-x-2 py-2 px-4 text-xs font-semibold tracking-wider rounded-md cursor-pointer transition-all ${activeTab === 'submissions' ? 'bg-[#121214] text-[#0071e3]' : 'text-[#8a8a8e] hover:text-white'}`}
           >
             <FileText className="w-4 h-4" />
             <span>Essays ({essays.length})</span>
           </button>
           <button 
-            onClick={() => setViewTab('students')} 
-            className={`flex items-center space-x-2 py-2 px-4 text-xs font-semibold tracking-wider rounded-md cursor-pointer transition-all ${viewTab === 'students' ? 'bg-[#121214] text-[#0071e3]' : 'text-[#8a8a8e] hover:text-white'}`}
+            onClick={() => setActiveTab('students')} 
+            className={`flex items-center space-x-2 py-2 px-4 text-xs font-semibold tracking-wider rounded-md cursor-pointer transition-all ${activeTab === 'students' ? 'bg-[#121214] text-[#0071e3]' : 'text-[#8a8a8e] hover:text-white'}`}
           >
             <Users className="w-4 h-4" />
             <span>Students ({students.length})</span>
           </button>
           <button 
-            onClick={() => setViewTab('control_panel')} 
-            className={`flex items-center space-x-2 py-2 px-4 text-xs font-semibold tracking-wider rounded-md cursor-pointer transition-all ${viewTab === 'control_panel' ? 'bg-[#121214] text-[#0071e3]' : 'text-[#8a8a8e] hover:text-white'}`}
+            onClick={() => setActiveTab('control_panel')} 
+            className={`flex items-center space-x-2 py-2 px-4 text-xs font-semibold tracking-wider rounded-md cursor-pointer transition-all ${activeTab === 'control_panel' ? 'bg-[#121214] text-[#0071e3]' : 'text-[#8a8a8e] hover:text-white'}`}
           >
             <Settings className="w-4 h-4" />
             <span>Control Panel</span>
           </button>
+          <button 
+            onClick={() => setActiveTab('leaderboard')} 
+            className={`flex items-center space-x-2 py-2 px-4 text-xs font-semibold tracking-wider rounded-md cursor-pointer transition-all ${activeTab === 'leaderboard' ? 'bg-[#121214] text-[#0071e3]' : 'text-[#8a8a8e] hover:text-white'}`}
+          >
+            <Trophy className="w-4 h-4" />
+            <span>Leaderboard</span>
+          </button>
+          <button 
+            onClick={() => setActiveTab('account')} 
+            className={`flex items-center space-x-2 py-2 px-4 text-xs font-semibold tracking-wider rounded-md cursor-pointer transition-all ${activeTab === 'account' ? 'bg-[#121214] text-[#0071e3]' : 'text-[#8a8a8e] hover:text-white'}`}
+          >
+            <User className="w-4 h-4" />
+            <span>Account</span>
+          </button>
         </div>
 
-        <div className="p-5 bg-[#121214] border border-[#1f1f23] rounded-xl space-y-3">
-          <span className="block text-[10px] uppercase tracking-widest font-bold text-[#8a8a8e]">Class Filter</span>
-          <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto">
-            {[
-              { id: 'all', label: 'All Classes' },
-              { id: 'even', label: 'Even Days' },
-              { id: 'odd', label: 'Odd Days' },
-              ...STUDENT_GROUPS.map(g => ({ id: g, label: g }))
-            ].map((grp) => {
-              const count = getEssaysCountByGroup(grp.id);
-              return (
-                <button 
-                  type="button" 
-                  key={grp.id} 
-                  onClick={() => setSelectedGroup(grp.id)} 
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border cursor-pointer flex items-center gap-2 transition-all ${
-                    selectedGroup === grp.id 
-                      ? 'bg-[#0071e3] text-white border-[#0071e3]' 
-                      : 'bg-black border-[#1f1f23] hover:border-[#374151] text-[#8a8a8e] hover:text-white'
-                  }`}
-                >
-                  <span>{grp.label}</span>
-                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${selectedGroup === grp.id ? 'bg-white/20 text-white' : 'bg-[#121214] text-[#6e6e73]'}`}>{count}</span>
-                </button>
-              );
-            })}
+        {/* Class Group Filters shown for relevant tables */}
+        {(activeTab === 'submissions' || activeTab === 'students') && (
+          <div className="p-5 bg-[#121214] border border-[#1f1f23] rounded-xl space-y-3 animate-fade-in">
+            <span className="block text-[10px] uppercase tracking-widest font-bold text-[#8a8a8e]">Class Filter</span>
+            <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto">
+              {[
+                { id: 'all', label: 'All Classes' },
+                { id: 'even', label: 'Even Days' },
+                { id: 'odd', label: 'Odd Days' },
+                ...STUDENT_GROUPS.map(g => ({ id: g, label: g }))
+              ].map((grp) => {
+                const count = getEssaysCountByGroup(grp.id);
+                return (
+                  <button 
+                    type="button" 
+                    key={grp.id} 
+                    onClick={() => setSelectedGroup(grp.id)} 
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold border cursor-pointer flex items-center gap-2 transition-all ${
+                      selectedGroup === grp.id 
+                        ? 'bg-[#0071e3] text-white border-[#0071e3]' 
+                        : 'bg-black border-[#1f1f23] hover:border-[#374151] text-[#8a8a8e] hover:text-white'
+                    }`}
+                  >
+                    <span>{grp.label}</span>
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${selectedGroup === grp.id ? 'bg-white/20 text-white' : 'bg-[#121214] text-[#6e6e73]'}`}>{count}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
-        {viewTab === 'submissions' && (
-          <>
+        {activeTab === 'submissions' && (
+          <div className="space-y-6 animate-fade-in">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="p-4 bg-[#121214] border border-[#1f1f23] rounded-xl">
                 <div className="text-[10px] text-[#8a8a8e] uppercase tracking-widest font-bold mb-1">Total Submissions</div>
@@ -490,7 +505,7 @@ export default function TeacherDashboard() {
                             )}
                           </td>
                           <td className="px-5 py-3.5 text-center space-x-2">
-                            <Link href={`/teacher/review/${essay.id}`} className="inline-flex px-3 py-1.5 bg-[#0071e3] hover:bg-[#2997ff] text-white font-medium uppercase text-[10px] rounded-full transition-all">Evaluate</Link>
+                            <button onClick={() => router.push(`/teacher/review/${essay.id}`)} className="inline-flex px-3 py-1.5 bg-[#0071e3] hover:bg-[#2997ff] text-white font-medium uppercase text-[10px] rounded-full transition-all cursor-pointer">Evaluate</button>
                             <button onClick={() => openDeleteEssayConfirm(essay.id)} className="p-1.5 text-[#8a8a8e] hover:text-[#ff453a] transition-all cursor-pointer"><Trash2 className="w-4 h-4" /></button>
                           </td>
                         </tr>
@@ -500,11 +515,11 @@ export default function TeacherDashboard() {
                 </div>
               )}
             </div>
-          </>
+          </div>
         )}
 
-        {viewTab === 'students' && (
-          <div className="space-y-4">
+        {activeTab === 'students' && (
+          <div className="space-y-4 animate-fade-in">
             <div className="bg-[#121214]/50 border border-[#1f1f23] rounded-xl overflow-hidden">
               <div className="p-4 border-b border-[#1f1f23] bg-[#121214] flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                 <h3 className="text-xs uppercase tracking-wider font-bold text-white">Student Roster</h3>
@@ -538,7 +553,7 @@ export default function TeacherDashboard() {
                           <td className="px-5 py-3.5 uppercase text-[#8a8a8e]">{student.group_name || 'No assignment'}</td>
                           <td className="px-5 py-3.5 text-[#8a8a8e] font-mono font-bold">{student.essay_count}</td>
                           <td className="px-5 py-3.5 text-center space-x-2">
-                            <button onClick={() => { setEditingStudent(student); setEditName(student.full_name); setEditGroup(student.group_name || STUDENT_GROUPS[0]); }} className="px-3.5 py-1.5 bg-black hover:bg-[#121214] border border-[#1f1f23] text-white rounded-full text-[10px] font-semibold uppercase tracking-wider transition-all cursor-pointer"><Edit2 className="w-3.5 h-3.5 inline mr-1" />Edit</button>
+                            <button onClick={() => { setEditingStudent(student); setEditStudentName(student.full_name); setEditStudentGroup(student.group_name || STUDENT_GROUPS[0]); }} className="px-3.5 py-1.5 bg-black hover:bg-[#121214] border border-[#1f1f23] text-white rounded-full text-[10px] font-semibold uppercase tracking-wider transition-all cursor-pointer"><Edit2 className="w-3.5 h-3.5 inline mr-1" />Edit</button>
                             <button onClick={() => openDeleteStudentConfirm(student.id)} className="px-3.5 py-1.5 bg-[#ff453a]/10 hover:bg-[#ff453a]/20 text-[#ff453a] rounded-full text-[10px] font-semibold uppercase tracking-wider transition-all cursor-pointer"><Trash2 className="w-3.5 h-3.5 inline mr-1" />Delete</button>
                           </td>
                         </tr>
@@ -551,175 +566,156 @@ export default function TeacherDashboard() {
           </div>
         )}
 
-        {viewTab === 'control_panel' && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Card 1: Session Controls & Access Codes */}
-              <div className="bg-[#121214] border border-[#1f1f23] rounded-xl p-6 space-y-5">
-                <div className="flex justify-between items-start">
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#0071e3] block">Safety & Monitoring</span>
-                    <h2 className="text-base font-semibold text-white">Lesson Testing Session</h2>
-                  </div>
-                  <div className="flex items-center gap-2 bg-black/40 border border-[#1f1f23] px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider text-[#8a8a8e]">
-                    <ShieldAlert className="w-3.5 h-3.5 text-[#ff9f0a]" />
-                    <span>Anti-Cheat Active</span>
-                  </div>
+        {activeTab === 'control_panel' && (
+          <div className="space-y-6 max-w-2xl animate-fade-in">
+            {/* Unified Session Lock Config Module */}
+            <div className="bg-[#121214] border border-[#1f1f23] rounded-xl p-6 space-y-5">
+              <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#0071e3] block">Classroom Monitoring</span>
+                  <h2 className="text-base font-semibold text-white">Lesson Testing Access Codes</h2>
                 </div>
+                <div className="flex items-center gap-2 bg-black/40 border border-[#1f1f23] px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider text-[#8a8a8e]">
+                  <ShieldAlert className="w-3.5 h-3.5 text-[#ff9f0a]" />
+                  <span>CBT Anti-Cheat Enabled</span>
+                </div>
+              </div>
 
-                <div className="space-y-4">
-                  {/* Global TestTaking Toggle */}
-                  <div className="flex items-center justify-between p-4 bg-black/20 border border-[#1f1f23] rounded-xl">
-                    <div className="space-y-0.5">
-                      <p className="text-xs font-semibold text-white uppercase tracking-wider">Authorize Writing Submissions</p>
-                      <p className="text-[10px] text-[#8a8a8e] leading-relaxed max-w-[200px]">Allow students to view and submit writing tests.</p>
+              <p className="text-xs text-[#8a8a8e] leading-relaxed">
+                Generate a dynamic four-digit numeric validation pin to lock the test cockpit room. Students will be requested to enter this specific code to proceed with writing sessions.
+              </p>
+
+              <div className="p-4 bg-black/40 border border-[#1f1f23] rounded-xl space-y-4">
+                {accessCode ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="p-3 bg-black border border-[#1f1f23] rounded-lg tracking-widest text-center font-mono text-xl font-extrabold text-[#30d158] flex-1 mr-4">
+                        {accessCode}
+                      </div>
+                      <div className="text-right space-y-1 shrink-0">
+                        <span className="block text-[8px] font-mono uppercase font-bold tracking-widest text-[#8a8a8e]">Time Remaining</span>
+                        <span className="block text-xs font-mono font-bold text-[#ff9f0a]">{timeLeftStr || 'Calculating...'}</span>
+                      </div>
                     </div>
-                    
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleGenerateCode}
+                        disabled={isUpdatingSettings}
+                        className="flex-1 py-1.5 border border-[#1f1f23] text-white hover:bg-[#121214] rounded-lg text-[9px] uppercase tracking-widest font-bold font-mono cursor-pointer transition-all disabled:opacity-50"
+                      >
+                        Regenerate Code
+                      </button>
+                      <button
+                        onClick={handleRevokeCode}
+                        disabled={isUpdatingSettings}
+                        className="py-1.5 px-3 bg-[#ff453a]/15 text-[#ff453a] border border-[#ff453a]/25 hover:bg-[#ff453a]/20 hover:text-white rounded-lg text-[9px] uppercase tracking-widest font-bold font-mono cursor-pointer transition-all disabled:opacity-50"
+                      >
+                        Revoke
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="p-4 bg-black border border-[#1f1f23] rounded-lg text-center">
+                      <p className="text-[10px] font-bold text-[#8a8a8e] uppercase tracking-wider">No Active Session Code</p>
+                      <p className="text-[9px] text-[#6e6e73] mt-1 leading-relaxed">If no access lock pin is generated, students may start practice configurations unrestricted.</p>
+                    </div>
                     <button
-                      onClick={() => handleToggleGlobalTesting(!testsEnabled)}
+                      onClick={handleGenerateCode}
                       disabled={isUpdatingSettings}
-                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 ${
-                        testsEnabled ? 'bg-[#30d158]' : 'bg-[#1f1f23]'
-                      }`}
+                      className="w-full py-2 bg-white text-black hover:bg-[#cfcfcf] rounded-full text-[10px] uppercase tracking-widest font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
                     >
-                      <span
-                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
-                          testsEnabled ? 'translate-x-5' : 'translate-x-0'
-                        }`}
-                      />
+                      <Sparkles className="w-3.5 h-3.5" /> Generate Access Pin
                     </button>
                   </div>
-
-                  {/* Access Code Settings Generator */}
-                  <div className="p-4 bg-black/40 border border-[#1f1f23] rounded-xl space-y-4">
-                    <div className="flex justify-between items-center pb-2 border-b border-[#1f1f23]/60">
-                      <div>
-                        <p className="text-xs font-semibold text-white uppercase tracking-wider">Lesson Access Code</p>
-                        <p className="text-[10px] text-[#8a8a8e] leading-relaxed">Students must enter this code to enter test room.</p>
-                      </div>
-                      <Key className="w-4 h-4 text-[#8a8a8e]" />
-                    </div>
-
-                    {accessCode ? (
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="p-3 bg-black border border-[#1f1f23] rounded-lg tracking-widest text-center font-mono text-xl font-extrabold text-[#30d158] flex-1 mr-4">
-                            {accessCode}
-                          </div>
-                          <div className="text-right space-y-1 shrink-0">
-                            <span className="block text-[8px] font-mono uppercase font-bold tracking-widest text-[#8a8a8e]">Validity Remaining</span>
-                            <span className="block text-xs font-mono font-bold text-[#ff9f0a]">{timeLeftStr || 'Calculating...'}</span>
-                          </div>
-                        </div>
-
-                        <div className="flex gap-2">
-                          <button
-                            onClick={handleGenerateCode}
-                            disabled={isUpdatingSettings}
-                            className="flex-1 py-1.5 border border-[#1f1f23] text-white hover:bg-[#121214] rounded-lg text-[9px] uppercase tracking-widest font-bold font-mono cursor-pointer transition-all disabled:opacity-50"
-                          >
-                            Regenerate Code
-                          </button>
-                          <button
-                            onClick={handleRevokeCode}
-                            disabled={isUpdatingSettings}
-                            className="py-1.5 px-3 bg-[#ff453a]/15 text-[#ff453a] border border-[#ff453a]/25 hover:bg-[#ff453a]/20 hover:text-white rounded-lg text-[9px] uppercase tracking-widest font-bold font-mono cursor-pointer transition-all disabled:opacity-50"
-                          >
-                            Revoke
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        <div className="p-4 bg-black border border-[#1f1f23] rounded-lg text-center">
-                          <p className="text-[10px] font-bold text-[#8a8a8e] uppercase tracking-wider">No Active Session Code</p>
-                          <p className="text-[9px] text-[#6e6e73] mt-1 leading-relaxed">If no code is generated, students may launch configurations unprompted.</p>
-                        </div>
-                        <button
-                          onClick={handleGenerateCode}
-                          disabled={isUpdatingSettings}
-                          className="w-full py-2 bg-white text-black hover:bg-[#cfcfcf] rounded-full text-[10px] uppercase tracking-widest font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
-                        >
-                          <Sparkles className="w-3.5 h-3.5" /> Force Generate Code
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Card 2: Administrative Reset & Practice Wiping */}
-              <div className="bg-[#121214] border border-[#1f1f23] rounded-xl p-6 flex flex-col justify-between space-y-5">
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#ff453a] block">Administrative Reset</span>
-                    <h2 className="text-base font-semibold text-white">Platform System Cleanup</h2>
-                  </div>
-                  <p className="text-xs text-[#8a8a8e] leading-relaxed">
-                    Erase all client-submitted documents, mock folders, essays, drafts, teacher evaluation notes, comments, and banding reports. This performs a deep sweep of practice logs to clean the platform to its default, baseline initial condition. All user accounts (both student credentials and instructor credentials) will remain fully intact.
-                  </p>
-                </div>
-
-                <div className="p-4 bg-red-500/5 border border-red-500/10 rounded-xl space-y-3">
-                  <div className="flex items-start gap-2 text-xs text-red-500 font-medium">
-                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                    <span>This operation is completely irreversible and wipes all historical records.</span>
-                  </div>
-                  <button
-                    onClick={() => setShowCleanupModal(true)}
-                    className="w-full py-2.5 bg-[#ff453a] hover:bg-[#ff453a]/80 text-white font-bold text-[10px] uppercase tracking-widest rounded-full cursor-pointer transition-colors"
-                  >
-                    Clear Platform Practice Data
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Leaderboard Summary inside Instructor Control Panel */}
-            <div className="bg-[#121214] border border-[#1f1f23] rounded-xl p-6">
-              <div className="flex items-center gap-2 mb-4 pb-2 border-b border-[#1f1f23]">
-                <Trophy className="w-4 h-4 text-[#ff9f0a]" />
-                <h3 className="text-xs uppercase tracking-wider font-bold text-white">Live Student Leaderboard</h3>
-              </div>
-              <div className="max-w-4xl">
-                <Leaderboard />
+                )}
               </div>
             </div>
           </div>
         )}
 
-        {showCleanupModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-md animate-fade-in">
-            <div className="w-full max-w-sm bg-[#121214] border border-[#ff453a]/30 rounded-xl p-6 space-y-5 shadow-none text-center">
-              <div className="w-12 h-12 rounded-full bg-[#ff453a]/10 border border-[#ff453a]/20 flex items-center justify-center text-[#ff453a] mx-auto animate-pulse">
-                <ShieldAlert className="w-6 h-6" />
+        {activeTab === 'leaderboard' && (
+          <div className="bg-[#121214] border border-[#1f1f23] rounded-xl p-6 animate-fade-in">
+            <Leaderboard />
+          </div>
+        )}
+
+        {activeTab === 'account' && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in">
+            {/* Account Details Panel */}
+            <div className="md:col-span-1 bg-[#121214] border border-[#1f1f23] p-6 rounded-xl space-y-4">
+              <div className="flex flex-col items-center text-center space-y-2 py-4 border-b border-[#1f1f23]">
+                <div className="w-16 h-16 rounded-full bg-zinc-900 border border-[#0071e3]/30 flex items-center justify-center text-[#0071e3] shadow-lg">
+                  <User className="w-8 h-8" />
+                </div>
+                <h3 className="text-base font-semibold text-white">{user?.fullName || 'Teacher'}</h3>
+                <span className="px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-zinc-800 border border-zinc-700 text-neutral-300 rounded-full">
+                  Examiner Profile
+                </span>
               </div>
-              <div className="space-y-1.5">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-white">Confirm Deep Cleanup?</h3>
-                <p className="text-xs text-[#8a8a8e] leading-relaxed">
-                  Are you entirely sure you want to permanently delete all submitted essays, drafts, evaluation ratings, and teacher feedback comments on this platform? All client and student accounts will be kept untouched.
-                </p>
+
+              <div className="space-y-3.5 text-xs">
+                <div>
+                  <span className="block text-[10px] uppercase tracking-wider text-[#71717a] font-semibold mb-0.5">Assigned Class Group</span>
+                  <span className="font-semibold text-[#0071e3] uppercase tracking-wider">All Classes (Instructor)</span>
+                </div>
+                <div>
+                  <span className="block text-[10px] uppercase tracking-wider text-[#71717a] font-semibold mb-0.5">Platform Access Permissions</span>
+                  <span className="text-[#a1a1aa] font-mono">Full Administration Rights</span>
+                </div>
               </div>
-              <div className="space-y-2 pt-2">
+            </div>
+
+            {/* Profile Update Panel */}
+            <div className="md:col-span-2 bg-[#121214] border border-[#1f1f23] p-6 rounded-xl space-y-5">
+              <div className="pb-2 border-b border-[#1f1f23]">
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-white">Profile Security</h2>
+                <p className="text-xs text-[#8a8a8e]">Modify your name structure or secure password parameters below</p>
+              </div>
+
+              <form onSubmit={handleUpdateAccount} className="space-y-4 max-w-lg">
+                <div className="space-y-1.5">
+                  <label className="block text-xs uppercase font-semibold text-[#8a8a8e]">Full Name (First Last)</label>
+                  <input
+                    type="text"
+                    required
+                    value={editName}
+                    onChange={e => setEditName(e.target.value)}
+                    className="w-full h-10 px-3 bg-black border border-[#1f1f23] rounded-lg text-sm text-white focus:outline-none focus:border-[#0071e3] transition-colors"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs uppercase font-semibold text-[#8a8a8e]">
+                    New Security Password <span className="text-[10px] text-[#6e6e73] font-normal lowercase italic">(leave blank to keep current)</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="password"
+                      minLength={6}
+                      placeholder="••••••••"
+                      value={newPassword}
+                      onChange={e => setNewPassword(e.target.value)}
+                      className="w-full h-10 pl-10 pr-3 bg-black border border-[#1f1f23] rounded-lg text-sm text-white focus:outline-none focus:border-[#0071e3] transition-colors placeholder:text-zinc-700 font-mono"
+                    />
+                    <KeyRound className="w-4 h-4 text-zinc-600 absolute left-3 top-3" />
+                  </div>
+                </div>
+
                 <button
-                  onClick={handleDeepCleanup}
-                  disabled={isCleaningData}
-                  className="w-full py-2.5 bg-[#ff453a] hover:bg-[#ff453a]/80 text-white rounded-full text-xs font-bold uppercase tracking-widest cursor-pointer disabled:opacity-50"
+                  type="submit"
+                  disabled={isUpdatingAccount}
+                  className="px-5 py-2.5 bg-white hover:bg-neutral-200 text-black font-semibold text-xs uppercase tracking-wider rounded-full cursor-pointer transition-all disabled:opacity-50"
                 >
-                  {isCleaningData ? 'Wiping Platform...' : 'Yes, Permanently Clear All'}
+                  {isUpdatingAccount ? 'Updating Account...' : 'Save Settings'}
                 </button>
-                <button
-                  onClick={() => setShowCleanupModal(false)}
-                  disabled={isCleaningData}
-                  className="w-full py-2 border border-[#1f1f23] text-[#8a8a8e] hover:text-white rounded-full text-xs font-bold uppercase tracking-widest cursor-pointer"
-                >
-                  Cancel
-                </button>
-              </div>
+              </form>
             </div>
           </div>
         )}
 
+        {/* Editing student modal */}
         {editingStudent && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
             <div className="w-full max-w-sm bg-[#121214] border border-[#1f1f23] rounded-xl p-6 space-y-4 shadow-none">
@@ -730,11 +726,11 @@ export default function TeacherDashboard() {
               <form onSubmit={handleSaveStudentEdit} className="space-y-4">
                 <div className="space-y-1">
                   <label className="block text-[10px] uppercase tracking-wider font-bold text-[#8a8a8e]">Full Name</label>
-                  <input type="text" value={editName} onChange={e => setEditName(e.target.value)} className="w-full px-3 py-2 bg-black border border-[#1f1f23] rounded-lg text-xs text-white focus:outline-none focus:border-[#0071e3]" required />
+                  <input type="text" value={editStudentName} onChange={e => setEditStudentName(e.target.value)} className="w-full px-3 py-2 bg-black border border-[#1f1f23] rounded-lg text-xs text-white focus:outline-none focus:border-[#0071e3]" required />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-[10px] uppercase tracking-wider font-bold text-[#8a8a8e]">Group Name</label>
-                  <select value={editGroup} onChange={e => setEditGroup(e.target.value)} className="w-full px-3 py-2 bg-black border border-[#1f1f23] rounded-lg text-xs text-white focus:outline-none focus:border-[#0071e3] cursor-pointer">
+                  <select value={editStudentGroup} onChange={e => setEditStudentGroup(e.target.value)} className="w-full px-3 py-2 bg-black border border-[#1f1f23] rounded-lg text-xs text-white focus:outline-none focus:border-[#0071e3] cursor-pointer">
                     {STUDENT_GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
                   </select>
                 </div>
@@ -744,6 +740,7 @@ export default function TeacherDashboard() {
           </div>
         )}
 
+        {/* Deletion confirmations */}
         {confirmModal.isOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
             <div className="w-full max-w-xs bg-[#121214] border border-[#1f1f23] rounded-xl p-5 space-y-4 shadow-none">

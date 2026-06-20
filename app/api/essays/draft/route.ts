@@ -1,5 +1,3 @@
-// File: app/api/essays/draft/route.ts
-
 import { requireAuth, successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
 import { supabaseAdmin } from '@/lib/supabase';
 
@@ -16,7 +14,7 @@ export async function GET() {
       .maybeSingle();
 
     if (dbErr) {
-      return errorResponse('Database query failed', 500);
+      return errorResponse('Failed to query ongoing draft state from database.', 500);
     }
 
     return successResponse({ draft });
@@ -34,7 +32,7 @@ export async function POST(request: Request) {
     const { task_type, topic_text, content_task1, content_task2, is_new } = body;
 
     if (is_new) {
-      // Starting a fresh test draft. Clear any old drafts to prevent duplicate drift.
+      // Clear out obsolete draft references for the student before initiating a fresh test
       await supabaseAdmin
         .from('essays')
         .delete()
@@ -46,7 +44,7 @@ export async function POST(request: Request) {
         .insert({
           student_id: session.id,
           task_type,
-          topic_text, // Holds the full JSON configuration
+          topic_text, // Serialized test cockpit parameters
           content_task1: content_task1 || '',
           content_task2: content_task2 || '',
           status: 'draft',
@@ -56,13 +54,13 @@ export async function POST(request: Request) {
 
       if (insertErr) {
         console.error('Insert Draft Error:', insertErr);
-        return errorResponse('Failed to create a new draft essay session', 500);
+        return errorResponse('Failed to initialize a new test draft on database.', 500);
       }
 
       return successResponse({ draft: newDraft });
     }
 
-    // Standard auto-save checkpoint.
+    // Standard auto-save interval checkpoint
     const { data: existingDraft, error: findErr } = await supabaseAdmin
       .from('essays')
       .select('id')
@@ -71,18 +69,18 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (findErr) {
-      return errorResponse('Failed to verify active draft state', 500);
+      return errorResponse('Database connection failed to verify active draft state.', 500);
     }
 
     if (!existingDraft) {
-      return errorResponse('No active draft session exists to save', 400);
+      return errorResponse('No active test draft exists to update.', 400);
     }
 
     const { data: updatedDraft, error: updateErr } = await supabaseAdmin
       .from('essays')
       .update({
         task_type,
-        topic_text, // Up-to-date config with saved timer expiration
+        topic_text,
         content_task1: content_task1 !== undefined ? content_task1 : '',
         content_task2: content_task2 !== undefined ? content_task2 : '',
       })
@@ -92,7 +90,7 @@ export async function POST(request: Request) {
 
     if (updateErr) {
       console.error('Update Draft Error:', updateErr);
-      return errorResponse('Failed to save draft progress to database', 500);
+      return errorResponse('Failed to save auto-save snapshot progress to database.', 500);
     }
 
     return successResponse({ draft: updatedDraft });

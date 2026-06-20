@@ -1,12 +1,9 @@
-// File: app/teacher/review/[id]/page.tsx
-
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { calculateOverallBand, getBandTextColor, getBandBadgeStyle, countWords } from '@/lib/utils';
-import { Essay } from '@/types';
 import { HighlightedText } from '@/components/highlighted-text';
 
 export default function TeacherReview() {
@@ -32,7 +29,6 @@ export default function TeacherReview() {
   const [commentInput, setCommentInput] = useState('');
   
   const [activeTaskTab, setActiveTaskTab] = useState(0); 
-  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
   const [focusedCommentIndex, setFocusedCommentIndex] = useState<number | null>(null);
   const [skipScoring, setSkipScoring] = useState(false);
@@ -54,13 +50,12 @@ export default function TeacherReview() {
         try { setTopicData(JSON.parse(currentEssay.topic_text)); } catch { setTopicData({ task1: { text: currentEssay.topic_text }, task2: { text: currentEssay.topic_text } }); }
         if (currentEssay.task_type === 'task2') setActiveTaskTab(1);
 
-        // Запрос истории предыдущих работ проверяемого студента
+        // Fetch student portfolio grade history
         if (currentEssay.student_id) {
           fetch(`/api/essays?student_id=${currentEssay.student_id}`)
             .then(res => res.json())
             .then(historyData => {
               if (historyData.essays) {
-                // Исключаем текущее эссе из истории
                 const filtered = historyData.essays.filter((e: any) => e.id !== id);
                 setPreviousEssays(filtered);
               }
@@ -91,12 +86,11 @@ export default function TeacherReview() {
     }).catch(() => setLoading(false));
   }, [id]);
 
-  // Initialize and center the draggable modal when a new comment is pending
   useEffect(() => {
     if (pendingComment) {
       if (typeof window !== 'undefined') {
         setModalPos({
-          x: window.innerWidth / 2 - 192, // ~192px is half of standard sm:w-96 (384px)
+          x: window.innerWidth / 2 - 192,
           y: window.innerHeight / 2 - 160
         });
       }
@@ -105,7 +99,6 @@ export default function TeacherReview() {
     }
   }, [pendingComment]);
 
-  // Draggable logic hook
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDragging || !modalPos) return;
@@ -131,7 +124,6 @@ export default function TeacherReview() {
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
-    // Do not initiate drag if user interacts with textarea or buttons inside modal
     if (target.closest('textarea') || target.closest('button')) {
       return;
     }
@@ -265,9 +257,9 @@ export default function TeacherReview() {
                 </div>
               </div>
 
-              {/* Счётчик слов */}
+              {/* Word Counter */}
               <div className="px-4 py-2 bg-[#121214] border border-[#1f1f23] rounded flex justify-between items-center text-xs font-mono text-[#8a8a8e] mt-2 select-none">
-                <span>Количество слов: <strong className="text-white">{countWords(textContent)}</strong></span>
+                <span>Word Count: <strong className="text-white">{countWords(textContent)}</strong></span>
                 {essay.task_type === 'both' && (
                   <span className="text-[10px] text-[#6e6e73]">
                     (Task 1: {countWords(essay.content_task1 || '')} | Task 2: {countWords(essay.content_task2 || '')})
@@ -352,8 +344,8 @@ export default function TeacherReview() {
             </div>
          </div>
          <div className="w-full lg:w-1/2 p-4 sm:p-6 overflow-y-auto bg-black">
-            {/* Карточка студента */}
-            <div className="bg-[#121214] border border-[#1f1f23] rounded-lg overflow-hidden mb-5">
+            {/* Student Info Card */}
+            <div className="bg-[#121214] border border-[#1f1f23] rounded-lg overflow-hidden mb-5 animate-fade-in">
               <button 
                 type="button"
                 onClick={() => setShowStudentCard(!showStudentCard)} 
@@ -361,11 +353,11 @@ export default function TeacherReview() {
               >
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-[#a1a1aa] flex items-center gap-1.5">
-                    📋 Информация о студенте
+                    📋 Student Profile Details
                   </span>
                 </div>
                 <span className="text-[10px] uppercase font-bold text-[#8a8a8e]">
-                  {showStudentCard ? 'Скрыть' : 'Показать'}
+                  {showStudentCard ? 'Hide' : 'Show'}
                 </span>
               </button>
 
@@ -373,25 +365,25 @@ export default function TeacherReview() {
                 <div className="p-4 space-y-3.5 border-t border-[#1f1f23] text-xs">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <span className="block text-[10px] uppercase tracking-wider text-[#71717a] font-semibold mb-0.5">ФИО Студента</span>
-                      <span className="font-semibold text-white text-sm">{essay.full_name || 'Неизвестно'}</span>
+                      <span className="block text-[10px] uppercase tracking-wider text-[#71717a] font-semibold mb-0.5">Student Full Name</span>
+                      <span className="font-semibold text-white text-sm">{essay.full_name || 'Unknown'}</span>
                     </div>
                     <div>
-                      <span className="block text-[10px] uppercase tracking-wider text-[#71717a] font-semibold mb-0.5">Класс / Группа</span>
-                      <span className="font-medium text-[#0071e3] uppercase tracking-wider">{essay.group_name || 'Не назначена'}</span>
+                      <span className="block text-[10px] uppercase tracking-wider text-[#71717a] font-semibold mb-0.5">Class Group</span>
+                      <span className="font-medium text-[#0071e3] uppercase tracking-wider">{essay.group_name || 'Unassigned'}</span>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 border-t border-[#1f1f23]/60 pt-3">
                     <div>
-                      <span className="block text-[10px] uppercase tracking-wider text-[#71717a] font-semibold mb-0.5">Всего работ</span>
+                      <span className="block text-[10px] uppercase tracking-wider text-[#71717a] font-semibold mb-0.5">Total Submissions</span>
                       <span className="font-mono font-bold text-white text-sm">{previousEssays.length + 1}</span>
                     </div>
                     <div>
-                      <span className="block text-[10px] uppercase tracking-wider text-[#71717a] font-semibold mb-0.5">Дата регистрации</span>
+                      <span className="block text-[10px] uppercase tracking-wider text-[#71717a] font-semibold mb-0.5">Registration Date</span>
                       <span className="text-[#a1a1aa] font-mono">
                         {essay.student_created_at 
-                          ? new Date(essay.student_created_at).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }) 
+                          ? new Date(essay.student_created_at).toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric' }) 
                           : '—'}
                       </span>
                     </div>
@@ -399,7 +391,7 @@ export default function TeacherReview() {
 
                   {previousEssays.length > 0 && (
                     <div className="border-t border-[#1f1f23]/60 pt-3 space-y-1.5">
-                      <span className="block text-[10px] uppercase tracking-wider text-[#71717a] font-semibold">История оценок (Динамика)</span>
+                      <span className="block text-[10px] uppercase tracking-wider text-[#71717a] font-semibold">Grade Evaluation History (Trends)</span>
                       <div className="flex flex-wrap gap-1.5 mt-1">
                         {previousEssays.map((prev) => {
                           const hasBand = prev.status === 'reviewed' && prev.overall_band !== null;

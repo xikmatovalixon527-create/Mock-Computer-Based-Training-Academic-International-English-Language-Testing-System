@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
 
     const { code } = await req.json();
     if (!code) {
-      return errorResponse('Code is required', 400);
+      return errorResponse('Access code input parameter is required.', 400);
     }
 
     let { data: settings, error: dbErr } = await supabaseAdmin
@@ -19,26 +19,22 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
 
     if (dbErr || !settings) {
-      return successResponse({ valid: false, message: 'Settings database not configured' });
-    }
-
-    if (!settings.tests_enabled) {
-      return successResponse({ valid: false, message: 'Practice sessions are currently disabled globally by the instructor.' });
+      return successResponse({ valid: false, message: 'Settings database is currently unconfigured.' });
     }
 
     const { access_code, code_expires_at } = settings;
 
     if (!access_code || !code_expires_at) {
-      return successResponse({ valid: false, message: 'No active session access code exists.' });
+      return successResponse({ valid: false, message: 'No active writing session access code exists.' });
     }
 
     const isExpired = new Date() > new Date(code_expires_at);
     if (isExpired) {
-      return successResponse({ valid: false, message: 'The session access code has expired.' });
+      return successResponse({ valid: false, message: 'This lesson access code has expired.' });
     }
 
     if (access_code !== code.trim()) {
-      return successResponse({ valid: false, message: 'Incorrect access code.' });
+      return successResponse({ valid: false, message: 'Incorrect lesson code entered.' });
     }
 
     return successResponse({ valid: true, message: 'Access granted.' });

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { BookOpen, ArrowRight, AlertCircle } from 'lucide-react';
+import { validateFullName } from '@/lib/utils';
 
 export default function LoginPage() {
   const [fullName, setFullName] = useState('');
@@ -15,11 +16,21 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    const trimmedName = fullName.trim();
+
+    // Fast layout formatting check
+    if (!validateFullName(trimmedName)) {
+      setError('Please enter your full name as exactly "First Last" using Latin letters (e.g., "John Doe").');
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fullName, password }),
+        body: JSON.stringify({ fullName: trimmedName, password }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to sign in');
@@ -37,7 +48,6 @@ export default function LoginPage() {
       <div className="luxury-grid-overlay opacity-30" />
       
       <div className="w-full max-w-[400px] z-10 space-y-8">
-        {/* Header */}
         <div className="text-center space-y-3">
           <div className="inline-flex w-12 h-12 rounded-full bg-zinc-900 items-center justify-center border border-zinc-800 shadow-xl mb-2">
             <BookOpen className="w-5 h-5 text-blue-500" />
@@ -48,12 +58,11 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Card */}
         <div className="bg-zinc-900 border border-zinc-850 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6">
           {error && (
             <div className="flex items-start gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20">
               <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-              <span className="text-xs text-red-400 font-semibold uppercase tracking-wider">{error}</span>
+              <span className="text-xs text-red-400 font-semibold uppercase tracking-wider leading-relaxed">{error}</span>
             </div>
           )}
 
@@ -68,7 +77,7 @@ export default function LoginPage() {
                 value={fullName}
                 onChange={e => setFullName(e.target.value)}
                 className="w-full h-11 px-4 bg-black border border-zinc-800 rounded-xl text-xs tracking-wider text-white placeholder:text-zinc-700 focus:outline-none focus:border-blue-500 transition-all font-medium"
-                placeholder="Enter your registered name"
+                placeholder="e.g. John Doe"
                 autoComplete="name"
               />
             </div>
@@ -83,7 +92,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 className="w-full h-11 px-4 bg-black border border-zinc-800 rounded-xl text-xs tracking-wider text-white placeholder:text-zinc-700 focus:outline-none focus:border-blue-500 transition-all font-medium"
-                placeholder="Enter your security password"
+                placeholder="••••••••"
                 autoComplete="current-password"
               />
             </div>
