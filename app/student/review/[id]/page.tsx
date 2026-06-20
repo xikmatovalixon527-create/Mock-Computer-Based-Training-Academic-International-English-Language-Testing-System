@@ -1,18 +1,14 @@
 'use client';
 
-import { useEffect, useState, use } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, ChevronRight, MessageSquare, Loader2 } from 'lucide-react';
 import { Essay } from '@/types';
 import { getBandBadgeStyle, getBandTextColor } from '@/lib/utils';
 import { HighlightedText } from '@/components/highlighted-text';
 
-interface StudentReviewResultProps {
-  params: Promise<{ id: string }>;
-}
-
-export default function StudentReviewResult({ params }: StudentReviewResultProps) {
-  const { id } = use(params);
+export default function StudentReviewResult() {
+  const { id } = useParams() as { id: string };
   const router = useRouter();
   
   const [essay, setEssay] = useState<Essay | null>(null);
@@ -212,9 +208,7 @@ export default function StudentReviewResult({ params }: StudentReviewResultProps
 
           {isReviewed && currentComments.length > 0 && (
             <div className="space-y-3">
-              <h4 className="font-semibold text-[#8a8a8e] uppercase tracking-wider text-xs flex items-center gap-1.5">
-                <MessageSquare className="w-3.5 h-3.5" /> Comments ({currentComments.length})
-              </h4>
+              <h4 className="font-semibold text-[#8a8a8e] uppercase tracking-wider text-xs flex items-center gap-1.5"><MessageSquare className="w-3.5 h-3.5" /> Comments ({currentComments.length})</h4>
               <div className="space-y-2">
                 {review.comments.map((c: any, i: number) => {
                   if (c.task_number !== activeTaskTab + 1) return null;
@@ -225,8 +219,8 @@ export default function StudentReviewResult({ params }: StudentReviewResultProps
                       onClick={() => setFocusedCommentIndex(isFocused ? null : i)} 
                       className={`p-4 rounded border text-sm cursor-pointer transition-all duration-200 ${
                         isFocused 
-                          ? 'bg-blue-600 text-white font-medium border-b-2 border-solid border-white mx-0.5 shadow-[0_0_10px_rgba(37,99,235,0.6)]' 
-                          : 'bg-black border-[#1f1f23] hover:border-zinc-700'
+                          ? 'bg-blue-600 text-white font-medium border-b-2 border-solid border-white mx-0.5 shadow-[0_0_10px_rgba(37,99,235,0.25)]' 
+                          : 'bg-[#121214] border-[#1f1f23] hover:border-zinc-700'
                       }`}
                     >
                       <div className={`text-xs italic mb-1.5 border-l-2 pl-2 ${
